@@ -1,0 +1,80 @@
+/*
+ * Ghi đè nhỏ lên SCSS Vineta — chỉ những gì mẫu không có hoặc cần cho tiếng Việt.
+ * Màu, chữ, khoảng cách... đều là của Vineta (src/styles/vineta), KHÔNG định nghĩa lại ở đây.
+ */
+
+/* Ảnh placeholder sinh cục bộ đã đúng tỉ lệ 3:4; next/image cần width/height auto. */
+img { max-width: 100%; height: auto; }
+
+/* Chấm màu & ô màu: Vineta dùng class `bg-*`, ta dùng mã hex từ dữ liệu nên đặt qua style. */
+.swatch-value, .check-color, .color-item .color { background-color: var(--swatch, transparent); }
+
+/* Nhãn "Dữ liệu mẫu" — Money Rule khi chưa có backend. */
+.mock-badge {
+  display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 4px;
+  background: var(--surface); color: var(--text-3); font-size: 10px; font-weight: 600;
+  letter-spacing: .04em; text-transform: uppercase; vertical-align: middle;
+}
+
+/* Thông báo lỗi form (RHF + Zod) — nhẹ, cùng giọng với `form` của Vineta. */
+.field-error { display: block; margin-top: 6px; color: var(--red); font-size: 12px; line-height: 18px; }
+input[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--red) !important; }
+
+/* Bảng giá lọc: giá VND lớn, không có ký hiệu $ */
+.filter-price .price-val::before { content: none; }
+.d-contents { display: contents; }
+
+/* Size hết hàng: gạch chéo, mờ — Vineta không có trạng thái này trên nút size. */
+.variant-picker-values .size-btn.disable {
+  opacity: .45; cursor: not-allowed; text-decoration: line-through; border-style: dashed;
+}
+
+/* Logo chữ FITLY. (thay logo.svg của mẫu) */
+.logo-text {
+  display: inline-flex; align-items: center; font-family: var(--font-heading), "Playfair Display", serif;
+  font-size: 30px; font-weight: 700; letter-spacing: .04em; line-height: 44px; color: var(--dark); text-decoration: none;
+  &:hover { color: var(--dark); }
+}
+.footer-logo .logo-text { font-size: 28px; }
+
+/* Hero FITLY: gradient trắng mờ bên trái để chữ đọc được trên ảnh nhiều chi tiết; cao 560–720px theo màn. */
+.slider-fitly .slider-wrap { position: relative; height: clamp(420px, 62vw, 720px); }
+.slider-fitly .slider-wrap .image, .slider-fitly .slider-wrap .image img { height: 100%; width: 100%; object-fit: cover; }
+.slider-fitly .slider-wrap::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(90deg, rgba(255,255,255,.88) 0%, rgba(255,255,255,.72) 32%, rgba(255,255,255,.25) 58%, rgba(255,255,255,0) 100%);
+}
+.slider-fitly .box-content { z-index: 2; }
+.slider-fitly .content-slider { gap: 32px; }
+.slider-fitly .box-title-slider { gap: 14px; }
+.slider-fitly .wrap-pagination { bottom: 28px; }
+@media (max-width: 767px) {
+  .slider-fitly .slider-wrap::after { background: linear-gradient(180deg, rgba(255,255,255,.2) 0%, rgba(255,255,255,.85) 100%); }
+  .slider-fitly .content-slider { gap: 20px; }
+  .slider-fitly .heading { font-size: 34px; line-height: 40px; }
+}
+
+/* Tab sản phẩm trang chủ: trên màn hẹp cho xuống dòng thay vì tràn ngang. */
+@media (max-width: 575px) {
+  .menu-tab-line.style-lg { flex-wrap: wrap; gap: 8px 20px; }
+  .menu-tab-line.style-lg .tab-link { font-size: 18px; line-height: 26px; padding-bottom: 6px; }
+}
+
+/* Dropdown menu: cột danh mục theo giới (2 cột) và dropdown gọn (1 cột) — Vineta chỉ có bản 750px + banner. */
+.box-nav-menu .sub-menu-style-2 { min-width: 0; padding: 24px 28px; gap: 40px; }
+.box-nav-menu .sub-menu-style-2 .mega-menu-item { min-width: 180px; }
+.box-nav-menu .sub-menu-style-2 .menu-list { width: auto; }
+.box-nav-menu .sub-menu-style-2 .menu-heading { margin-bottom: 12px; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--dark); }
+.box-nav-menu .sub-menu-gon { padding: 16px 20px; }
+.box-nav-menu .sub-menu-gon .mega-menu-item { min-width: 200px; }
+
+/* Utility khoảng cách bổ sung — Vineta chỉ có một số bước (mb_12, mb_16, mt_10...); đủ bộ để component không "dính". */
+.mt_4 { margin-top: 4px !important; } .mt_8 { margin-top: 8px !important; } .mt_12 { margin-top: 12px !important; }
+.mt_16 { margin-top: 16px !important; } .mt_20 { margin-top: 20px !important; } .mt_24 { margin-top: 24px !important; }
+.mt_30 { margin-top: 30px !important; } .mt_32 { margin-top: 32px !important; }
+.mb_30 { margin-bottom: 30px !important; }
+.gap-6 { gap: 6px !important; } .gap-8 { gap: 8px !important; } .gap-12 { gap: 12px !important; } .gap-16 { gap: 16px !important; } .gap-20 { gap: 20px !important; }
+
+/* Đánh giá sản phẩm: ảnh đại diện thiếu -> ô tròn chữ cái đầu (Vineta chỉ có ảnh). */
+.wd-customer-review .review-avt .avatar-placeholder { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 50%; background: var(--primary-4); color: var(--primary); font-weight: 600; }
+.wd-customer-review .review-avt img { object-fit: cover; }

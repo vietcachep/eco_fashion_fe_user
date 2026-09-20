@@ -1,0 +1,8 @@
+/*
+ * Điểm vào SCSS của Vineta. Bản gốc @import fonts/css qua đường dẫn tuyệt đối
+ * (/fonts, /css) — ở đây các file đó được import trong `app/layout.tsx` để
+ * bundler (Turbopack) xử lý; file này chỉ còn phần SCSS của theme.
+ */
+@use "sass:meta";
+@include meta.load-css("app.scss");
+@include meta.load-css("custom.scss");

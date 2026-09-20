@@ -1,0 +1,230 @@
+/*
+ * Khu tài khoản · đặt hàng · mã giảm giá (theo eco_frontend_user, dựng trên
+ * `_account.scss` / `_cart.scss` của Vineta). Tiền tố: .acc-, .order-, .voucher-, .pm-
+ * Import sau fitly.scss trong app/layout.tsx.
+ */
+.font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: 0; }
+/* Vineta đặt <button> mặc định = nút đen chữ trắng, căn giữa. Các "nút phẳng" (thẻ chọn địa chỉ,
+   dòng lý do, sao, nút mở mã) phải reset lại — nếu không chữ trắng biến mất trên nền trắng. */
+.btn-plain { background: none; border: 0; padding: 0; border-radius: 0; color: inherit; font: inherit; line-height: inherit; justify-content: flex-start; gap: 0; }
+.btn-link-plain { background: none; border: 0; padding: 0; color: var(--primary); font-size: 14px; line-height: 20px; border-radius: 0; }
+.tf-btn.btn-xs { padding: 6px 16px; font-size: 14px; line-height: 20px; gap: 6px; }
+.tf-btn.btn-xs svg { width: 14px; height: 14px; }
+.tf-btn.btn-xs .icon { font-size: 12px; }
+.tf-btn:disabled { opacity: .55; cursor: not-allowed; }
+
+/* --- Vỏ tài khoản --- */
+.title-account { font-size: 20px; line-height: 28px; font-weight: 600; margin-bottom: 20px; }
+.sidebar-account-wrap .my-account-nav-item { display: flex; align-items: center; gap: 10px; }
+.sidebar-account-wrap .my-account-nav-item .icon { font-size: 15px; width: 18px; text-align: center; }
+.sidebar-account-wrap .my-account-nav-item svg { width: 16px; height: 16px; }
+.sidebar-account-wrap.sticky-top { top: 110px; z-index: 5; }
+.acc-user { display: flex; align-items: center; gap: 12px; padding: 16px 12px; border-bottom: 1px solid var(--line); }
+.acc-avatar { width: 40px; height: 40px; flex: 0 0 40px; border-radius: 50%; background: var(--primary-4); color: var(--primary); font-weight: 700; font-size: 15px; display: grid; place-items: center; overflow: hidden; position: relative; }
+.acc-avatar.lg { width: 64px; height: 64px; flex-basis: 64px; font-size: 24px; }
+.acc-avatar-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.btn-avatar-action { font-size: 13px; font-weight: 500; padding: 4px 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--dark); cursor: pointer; transition: all 0.2s ease; }
+.btn-avatar-action:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); background: var(--primary-4); }
+.btn-avatar-action:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-avatar-action.text-danger { color: #ef4444; }
+.btn-avatar-action.text-danger:hover:not(:disabled) { border-color: #ef4444; background: #fef2f2; color: #b91c1c; }
+.acc-nav-mb { display: flex; gap: 8px; overflow-x: auto; margin: 0 -15px 20px; padding: 0 15px 6px; scrollbar-width: none; }
+.acc-nav-mb::-webkit-scrollbar { display: none; }
+.acc-pill { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); font-size: 13px; font-weight: 500; color: var(--dark); white-space: nowrap; cursor: pointer; }
+.acc-pill .icon { font-size: 13px; }
+.acc-pill svg { width: 14px; height: 14px; }
+.acc-pill.active { background: var(--primary-4); border-color: var(--primary); color: var(--primary); }
+.acc-card { border: 1px solid var(--line); border-radius: 16px; padding: 20px; background: var(--white); }
+.acc-card.is-accent { border-color: rgba(255, 111, 97, .45); background: #fffaf9; }
+.acc-badge { display: inline-block; padding: 2px 8px; border-radius: 999px; background: var(--surface); color: var(--text-3); font-size: 11px; font-weight: 500; line-height: 16px; }
+.acc-empty { border: 1px dashed #ddd; border-radius: 16px; padding: 48px 24px; text-align: center; }
+.acc-tabs { display: flex; gap: 6px; overflow-x: auto; padding: 6px; border: 1px solid var(--line); border-radius: 12px; margin-bottom: 20px; scrollbar-width: none; }
+.acc-tabs::-webkit-scrollbar { display: none; }
+.acc-tab { flex: 0 0 auto; padding: 7px 14px; border-radius: 999px; font-size: 14px; color: var(--text-3); white-space: nowrap; transition: all .2s; }
+.acc-tab:hover { background: var(--surface); color: var(--dark); }
+.acc-tab.active { background: var(--dark); color: var(--white); font-weight: 500; }
+.acc-profile-head { display: flex; align-items: center; gap: 16px; padding-bottom: 16px; margin-bottom: 20px; border-bottom: 1px solid var(--line); }
+.acc-form { display: grid; gap: 16px; max-width: 520px; text-align: left; }
+.acc-form fieldset { min-width: 0; }
+.acc-form .tf-btn { margin-top: 0; }
+.acc-form-actions { display: flex; gap: 12px; padding-top: 16px; border-top: 1px solid var(--line); }
+.acc-locked { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 10px; background: var(--surface); margin: 0; }
+
+/* --- Nhãn trạng thái: đang chạy tốt (xanh) · cần chú ý (cam) · đã dừng (xám) --- */
+.status-badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px; font-size: 12px; line-height: 18px; font-weight: 500; white-space: nowrap; }
+.status-badge.is-ok { background: rgba(49, 208, 170, .14); color: #0f8a6a; }
+.status-badge.is-warn { background: #fff4e5; color: #b25e00; }
+.status-badge.is-muted { background: var(--surface); color: var(--text-3); }
+
+/* --- Thẻ đơn hàng --- */
+.order-list { display: grid; gap: 16px; list-style: none; padding: 0; margin: 0; }
+.order-card { border: 1px solid var(--line); border-radius: 16px; background: var(--white); overflow: hidden; }
+.order-card-head, .order-card-foot, .order-card-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 12px 16px; }
+.order-card-head { border-bottom: 1px solid var(--line); }
+.order-card-foot, .order-card-actions { border-top: 1px solid var(--line); }
+.order-card-actions:empty { display: none; }
+.order-items { list-style: none; margin: 0; padding: 0; }
+.order-items > li + li { border-top: 1px solid var(--line); }
+.order-line { display: flex; gap: 12px; padding: 14px 16px; align-items: flex-start; }
+.order-line .thumb { flex: 0 0 64px; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); }
+.order-line .thumb img { width: 64px; height: auto; aspect-ratio: 3 / 4; object-fit: cover; display: block; }
+.order-line .text-end { white-space: nowrap; }
+.order-detail-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 12px 0 20px; }
+.order-detail-grid { display: grid; gap: 20px; align-items: start; }
+.order-detail-body { padding: 4px 0 16px; }
+.order-card-body { padding: 14px 16px; }
+.order-note { margin: 12px 16px 0; padding: 10px 12px; border-radius: 10px; background: var(--surface-2); }
+.order-timeline-wrap { padding: 20px 16px 0; }
+.order-side { display: grid; gap: 14px; }
+.order-side-sep { padding-top: 14px; border-top: 1px solid var(--line); }
+.order-side .order-total { white-space: nowrap; }
+.order-money { display: grid; gap: 8px; margin: 0; font-size: 14px; }
+.order-money > div { display: flex; justify-content: space-between; gap: 12px; }
+.order-money dd { margin: 0; font-weight: 500; }
+.order-panel { border-top: 1px solid var(--line); background: var(--surface-2); padding: 16px; }
+.reason-list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 4px; }
+.reason-item { display: flex; align-items: center; justify-content: flex-start; gap: 10px; width: 100%; padding: 7px 10px; border: 0; border-radius: 8px; background: transparent; color: var(--text-3); font-size: 14px; line-height: 20px; text-align: left; cursor: pointer; transition: background .2s; }
+.reason-item:hover { background: rgba(255, 255, 255, .7); }
+.reason-item.active { background: var(--white); color: var(--dark); font-weight: 500; }
+.reason-item .radio { width: 14px; height: 14px; flex: 0 0 14px; border-radius: 50%; border: 1px solid #ccc; }
+.reason-item.active .radio { border: 4px solid var(--primary); }
+.return-items { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.return-items img { width: 40px; height: auto; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 6px; }
+
+/* --- Hành trình đơn: mốc mới nhất trên cùng --- */
+.order-timeline { list-style: none; margin: 0; padding: 0; }
+.tl-item { display: flex; gap: 12px; position: relative; }
+.tl-dot { position: relative; width: 24px; height: 24px; flex: 0 0 24px; border-radius: 50%; border: 1px solid var(--line); background: var(--white); display: grid; place-items: center; color: var(--text-3); }
+.tl-dot span { width: 6px; height: 6px; border-radius: 50%; background: #ccc; }
+.tl-dot svg { width: 12px; height: 12px; }
+.tl-item.latest .tl-dot { background: var(--primary); border-color: var(--primary); color: var(--white); }
+/* Đường nối đặt trên .tl-item (không phải ::after của .tl-dot — .tl-dot là grid, pseudo sẽ bị xếp thành ô giữa). */
+.tl-item:not(:last-child)::before { content: ""; position: absolute; top: 26px; bottom: 2px; left: 12px; width: 1px; background: var(--line); }
+.tl-body { padding-bottom: 18px; }
+
+/* --- Đánh giá --- */
+.rate-pick { gap: 2px; }
+.star-btn { border: 0; background: none; padding: 2px; border-radius: 0; color: #ccc; font-size: 18px; line-height: 1; cursor: pointer; }
+.star-btn.on { color: #ffc108; }
+.star-btn .icon { font-size: 18px; }
+
+/* --- Đặt hàng --- */
+.tf-checkout-cart-main .box-ip-checkout .title { display: flex; align-items: center; gap: 8px; }
+.tf-checkout-cart-main .title svg { width: 18px; height: 18px; color: var(--primary); }
+.checkout-empty-address { border: 1px dashed #ddd; border-radius: 12px; padding: 20px; text-align: center; }
+.checkout-address-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.checkout-address { display: flex; justify-content: flex-start; align-items: flex-start; gap: 12px; width: 100%; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--white); color: var(--dark); font-size: 14px; line-height: 20px; font-weight: 400; text-align: left; cursor: pointer; transition: border-color .2s, background .2s; }
+.checkout-address:hover { border-color: var(--dark); }
+.checkout-address.active { border-color: var(--primary); background: #fffaf9; }
+.checkout-address .radio { margin-top: 2px; width: 18px; height: 18px; flex: 0 0 18px; border-radius: 50%; border: 1px solid #ccc; display: grid; place-items: center; color: var(--white); }
+.checkout-address.active .radio { background: var(--primary); border-color: var(--primary); }
+.checkout-address .radio svg { width: 10px; height: 10px; }
+.checkout-items { border: 1px solid var(--line); border-radius: 12px; }
+.checkout-items .order-line { padding: 12px 14px; }
+.tf-checkout-cart-main textarea.style-2, .order-panel textarea.style-2 { width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; font-size: 14px; line-height: 22px; resize: vertical; }
+.checkout-summary .order-box { position: sticky; top: 110px; }
+.checkout-error { padding: 10px 14px; border-radius: 10px; background: var(--primary-4); color: var(--primary); }
+.voucher-applied { display: flex; align-items: center; gap: 6px; margin-top: 10px; color: #0f8a6a; }
+.voucher-applied svg { width: 13px; height: 13px; }
+
+/* Phương thức thanh toán (`payment-item` của Vineta) */
+.payment-item { transition: border-color .2s; }
+.payment-item.active { border-color: var(--primary); }
+.payment-item .payment-header { cursor: pointer; align-items: flex-start; }
+.payment-item .payment-header .tf-check-rounded { margin-top: 10px; }
+.pm-icon { width: 32px; height: 32px; flex: 0 0 32px; border-radius: 50%; background: var(--surface); color: var(--text-3); display: grid; place-items: center; transition: all .2s; }
+.pm-icon svg { width: 15px; height: 15px; }
+.pm-icon .icon { font-size: 14px; }
+.pm-icon.on { background: var(--primary); color: var(--white); }
+.pm-icon.on-soft { background: var(--primary-4); color: var(--primary); }
+.pm-text { flex: 1; min-width: 0; }
+.pm-note { padding: 10px 14px; border: 1px dashed #ddd; border-radius: 10px; line-height: 20px; margin: 0; }
+.card-brands { display: inline-flex; gap: 4px; }
+.card-brand { padding: 1px 6px; border: 1px solid currentColor; border-radius: 4px; font-size: 10px; font-weight: 700; letter-spacing: .02em; line-height: 14px; opacity: .8; }
+.card-form .ip-card input { padding-right: 16px; }
+.card-form .hint { display: block; margin-top: 6px; line-height: 18px; }
+.card-safe { display: flex; gap: 8px; align-items: flex-start; line-height: 18px; margin: 0; }
+.card-safe svg { width: 14px; height: 14px; flex: 0 0 14px; margin-top: 2px; color: #0f8a6a; }
+.pay-summary { display: flex; align-items: center; gap: 10px; margin: 0; }
+
+/* Chuyển khoản */
+.transfer-box .transfer-rows { display: grid; gap: 6px; margin: 0; padding: 12px 14px; border-radius: 10px; background: var(--surface-2); }
+.transfer-box dd { margin: 0; }
+.acc-card.is-accent .transfer-rows { background: var(--white); }
+
+/* Trang thành công (`title-success-order` / `tf-main-success` của Vineta) */
+.title-success-order .success-icon { width: 96px; height: 96px; margin: 0 auto 24px; border-radius: 50%; background: rgba(49, 208, 170, .14); color: #0f8a6a; display: grid; place-items: center; }
+.title-success-order .success-icon svg { width: 44px; height: 44px; }
+.tf-main-success .box-progress-order { margin-bottom: 24px; gap: 12px; }
+.tf-main-success .box-ship-address .ship-address-item .title { margin-bottom: 12px; }
+.tf-main-success .list-address { list-style: none; margin: 0; padding: 0; }
+
+/* --- Mã giảm giá: nút mở + modal + phiếu --- */
+.voucher-trigger { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 12px 14px; border: 1px dashed var(--primary); border-radius: 10px; background: var(--primary-4); color: var(--dark); font-size: 14px; line-height: 20px; font-weight: 500; text-align: left; cursor: pointer; transition: background .2s; }
+.voucher-trigger:hover { background: #ffe9e6; }
+.voucher-trigger svg { width: 18px; height: 18px; flex: 0 0 18px; color: var(--primary); }
+.voucher-trigger .icon { font-size: 10px; margin-left: 4px; }
+.modal-voucher .modal-dialog { max-width: 520px; }
+.modal-voucher .modal-content { border-radius: 16px; max-height: min(84vh, 720px); }
+.modal-voucher .modal-header { padding: 20px 24px 14px; border-bottom: 1px solid var(--line); align-items: flex-start; }
+.modal-voucher .modal-header .title { font-size: 18px; font-weight: 600; line-height: 26px; }
+.modal-voucher .voucher-error { margin: 12px 24px 0; }
+/* `grid-auto-rows: max-content` là BẮT BUỘC: danh sách bị flex cột của .modal-content ép chiều cao, mà phiếu
+   có overflow hidden (min-height = 0) nên hàng grid bị chia đều rồi cắt mất hàng nút "Dùng". */
+.modal-voucher .voucher-list { padding: 14px 24px; display: grid; grid-auto-rows: max-content; gap: 10px; overflow-y: auto; align-content: start; min-height: 0; }
+.modal-voucher .voucher-footer { display: flex; align-items: center; gap: 8px; padding: 12px 24px; border-top: 1px solid var(--line); }
+.voucher-ticket { display: flex; border: 1px solid var(--line); border-radius: 12px; background: var(--white); transition: border-color .2s, box-shadow .2s; }
+.voucher-ticket.is-selected { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
+.voucher-ticket.is-muted { opacity: .65; }
+.voucher-ticket.is-muted .voucher-stub { filter: grayscale(1); }
+.voucher-stub { flex: 0 0 52px; display: grid; place-items: center; border-right: 1px dashed #ccc; border-radius: 11px 0 0 11px; position: relative; }
+.voucher-stub::before, .voucher-stub::after { content: ""; position: absolute; right: -7px; width: 14px; height: 14px; border-radius: 50%; background: var(--white); border: 1px solid var(--line); }
+.voucher-stub::before { top: -8px; }
+.voucher-stub::after { bottom: -8px; }
+.voucher-stub svg { width: 20px; height: 20px; }
+.is-sale .voucher-stub { background: var(--primary-4); color: var(--primary); }
+.is-ship .voucher-stub { background: rgba(49, 208, 170, .12); color: #0f8a6a; }
+.voucher-body { flex: 1; min-width: 0; padding: 12px 14px; }
+.voucher-desc { margin-top: 2px; line-height: 18px; }
+.voucher-meta { margin-top: 6px; font-size: 11px; }
+.voucher-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
+.voucher-badge { display: inline-block; padding: 2px 8px; border-radius: 999px; background: rgba(49, 208, 170, .14); color: #0f8a6a; font-size: 11px; font-weight: 500; line-height: 16px; }
+
+@media (min-width: 992px) {
+  .order-detail-grid { grid-template-columns: minmax(0, 1fr) 300px; }
+  .order-side { position: sticky; top: 110px; }
+}
+@media (max-width: 991.98px) {
+  .main-content-account { flex-direction: column; }
+  .tf-main-success .box-progress-order { grid-template-columns: repeat(2, 1fr); row-gap: 20px; }
+  .tf-main-success .box-progress-order .order-progress-item:nth-child(2) { border-right: 0; }
+  .checkout-summary .order-box { position: static; }
+}
+@media (max-width: 575.98px) {
+  .order-line { padding: 12px; }
+  .order-line-total { display: none; } /* đơn giá × số lượng đã đủ, bớt cột cho màn hẹp */
+  .acc-card { padding: 16px; }
+  .modal-voucher .modal-header, .modal-voucher .voucher-list, .modal-voucher .voucher-footer { padding-left: 16px; padding-right: 16px; }
+  .modal-voucher .voucher-error { margin-left: 16px; margin-right: 16px; }
+  .tf-main-success .box-progress-order { padding: 16px; }
+}
+
+/* --- Đính kèm ảnh/video (đánh giá, minh chứng trả hàng) --- */
+.media-grid { --thumb: 88px; display: flex; flex-wrap: wrap; gap: 8px; }
+.media-thumb { position: relative; width: var(--thumb); height: var(--thumb); border-radius: 10px; overflow: hidden; border: 1px solid var(--line); background: var(--surface); flex: 0 0 auto; }
+.media-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.media-thumb .play { position: absolute; inset: 0; display: grid; place-items: center; color: var(--white); font-size: 18px; background: rgba(0, 0, 0, .28); pointer-events: none; }
+.media-thumb .btn-remove { position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; background: rgba(0, 0, 0, .65); color: var(--white); font-size: 14px; line-height: 1; display: grid; place-items: center; cursor: pointer; }
+.media-add { width: var(--thumb); height: var(--thumb); padding: 6px; border: 1px dashed #ccc; border-radius: 10px; background: var(--white); color: var(--dark); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 11px; line-height: 14px; text-align: center; cursor: pointer; transition: border-color .2s, background .2s; }
+.media-add:hover { border-color: var(--primary); background: var(--primary-4); }
+.media-add svg { width: 20px; height: 20px; color: var(--primary); }
+.media-add:disabled { opacity: .6; cursor: wait; }
+.form-review .media-uploader { margin-top: 4px; }
+.wd-customer-review .review-content .media-grid { margin-top: 2px; }
+
+/* Mã giảm giá trong ngăn kéo giỏ / trang giỏ */
+.cart-voucher-tool { display: flex; flex-direction: column; }
+.cart-voucher-tool .voucher-list { padding: 12px 0; max-height: 50vh; overflow-y: auto; display: grid; grid-auto-rows: max-content; gap: 10px; align-content: start; }
+.box-ip-discount.cart-voucher { display: block; }
+.tf-mini-cart-tool-openable .cart-voucher-tool { padding: 20px 24px; max-height: calc(100vh - 120px); overflow: hidden; }
+.tf-mini-cart-tool-openable .cart-voucher-tool .voucher-list .tf-btn { height: auto; }

@@ -25,6 +25,17 @@ npm run dev                  # http://localhost:3000
 | `python scripts/sinh-anh-mau.py` | Sinh lại ảnh placeholder sản phẩm theo màu (`public/images/products/<slug>/<màu>-1.jpg`) |
 | `npm run api:sync` | Tải OpenAPI spec (`API_SPEC_URL`) rồi sinh model + hook vào `src/lib/api/generated` (chưa dùng — chờ backend) |
 
+### Chạy bằng Docker
+
+```bash
+# Build và chạy qua Docker Compose (mặc định port 3000)
+docker compose up -d --build
+
+# Hoặc build và chạy trực tiếp bằng Docker
+docker build -t ecofashion-fe-user .
+docker run -d -p 3000:3000 --name ecofashion-fe-user ecofashion-fe-user
+```
+
 ## Trạng thái: chạy trên dữ liệu mẫu
 
 Chưa có backend (quyết định ở PLAN-0002). Mọi màn chạy trên mock trong

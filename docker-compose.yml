@@ -1,0 +1,29 @@
+# =====================================================================
+# EcoFashion Frontend User — Docker Compose
+# Cách chạy:
+#     docker compose up -d --build
+#
+# Truy cập:
+#     http://localhost:3000
+#
+# Biến môi trường lúc build:
+#   - NEXT_PUBLIC_API_URL: Địa chỉ API backend (mặc định http://localhost:4000)
+#   - NEXT_PUBLIC_GOOGLE_CLIENT_ID: Google OAuth Client ID nếu có
+# =====================================================================
+
+services:
+  fe-user:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
+        NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID:-}
+    image: ecofashion-fe-user:latest
+    container_name: ecofashion-fe-user
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      PORT: 3000
+      NODE_ENV: production

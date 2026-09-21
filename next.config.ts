@@ -5,6 +5,7 @@ import type { NextConfig } from "next";
  * chưa cấu hình Cloudinary) — `next/image` chỉ tối ưu host có trong danh sách (PLAN-0006).
  */
 const nextConfig: NextConfig = {
+  output: "standalone",
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "res.cloudinary.com" },

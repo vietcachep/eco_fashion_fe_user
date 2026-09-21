@@ -37,6 +37,17 @@ export async function mockLogin(email: string, password: string): Promise<TokenP
   return thanhToken(u);
 }
 
+export async function mockGoogleLogin(_idToken?: string): Promise<TokenPairResponse> {
+  void _idToken;
+  await cho(500);
+  const mockGoogleUser: MockUser = {
+    email: "khach.google@fitly.vn",
+    password: "",
+    full_name: "Google Customer (Demo)",
+  };
+  return thanhToken(mockGoogleUser);
+}
+
 export async function mockRegister(u: MockUser): Promise<{ message: string }> {
   await cho(500);
   if ([...TAI_KHOAN_DEMO, ...docDangKy()].some((x) => x.email.toLowerCase() === u.email.toLowerCase())) {

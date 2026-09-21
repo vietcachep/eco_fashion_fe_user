@@ -3,7 +3,7 @@ import type { ApiResponse } from "@/types/common";
 import type {
   AuthMessageResponse, AuthUserResponse, ForgotPasswordRequest, LoginRequest, RegisterRequest, TokenPairResponse,
 } from "@/features/identity/types";
-import { mockChangePassword, mockForgotPassword, mockLogin, mockRegister, mockUpdateProfile } from "@/features/identity/mock/auth-mock";
+import { mockChangePassword, mockForgotPassword, mockGoogleLogin, mockLogin, mockRegister, mockUpdateProfile } from "@/features/identity/mock/auth-mock";
 
 /*
  * API xác thực.
@@ -56,6 +56,12 @@ export async function login(body: LoginRequest): Promise<TokenPairResponse> {
   if (CHE_DO_MOCK) return mockLogin(body.email, body.password);
   const res = await api.post<ApiResponse<BatKy>>("/api/v1/auth/login", body);
   return chuanHoaTokenPair(bocData(res, "login"));
+}
+
+export async function loginWithGoogle(idToken: string): Promise<TokenPairResponse> {
+  if (CHE_DO_MOCK) return mockGoogleLogin(idToken);
+  const res = await api.post<ApiResponse<BatKy>>("/api/v1/auth/google", { idToken });
+  return chuanHoaTokenPair(bocData(res, "loginWithGoogle"));
 }
 
 /* Đăng ký: eco_backend trả thông báo (chờ OTP); NestJS eco_fashion trả luôn cặp token (đăng nhập ngay). */

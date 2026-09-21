@@ -4,7 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import { toast } from "sonner";
 import { apiErrorMessage, apiMessage } from "@/lib/api-error";
-import { changePassword, deleteAvatar, forgotPassword, login, logout, register, updateAvatar, updateProfile } from "@/features/identity/api/auth-api";
+import { changePassword, deleteAvatar, forgotPassword, login, loginWithGoogle, logout, register, updateAvatar, updateProfile } from "@/features/identity/api/auth-api";
 import type { ForgotPasswordInput, LoginInput, RegisterInput } from "@/features/identity/schemas/auth-schemas";
 import { useAuthStore } from "@/stores/auth-store";
 
@@ -36,6 +36,18 @@ export function useLogin() {
       return t.user;
     },
     onError: (err) => toast.error(loi(err, "Email hoặc mật khẩu không đúng")),
+  });
+}
+
+export function useGoogleLogin() {
+  return useMutation({
+    mutationFn: async (idToken: string) => {
+      const t = await loginWithGoogle(idToken);
+      useAuthStore.getState().setTokens(t.access_token, t.refresh_token);
+      useAuthStore.getState().setUser(t.user);
+      return t.user;
+    },
+    onError: (err) => toast.error(loi(err, "Đăng nhập Google thất bại")),
   });
 }
 

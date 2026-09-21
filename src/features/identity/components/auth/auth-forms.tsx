@@ -13,6 +13,7 @@ import {
   type ForgotPasswordInput, type LoginInput, type RegisterInput,
 } from "@/features/identity/schemas/auth-schemas";
 import { useForgotPassword, useLogin, useRegister } from "@/features/identity/hooks/use-auth-mutations";
+import { GoogleLoginButton } from "@/features/identity/components/auth/google-login-button";
 
 /*
  * Ba form xác thực theo markup `form-login` của Vineta (fieldset + input, khối
@@ -25,7 +26,7 @@ type Variant = "drawer" | "page";
 
 function NutPhu({ variant, target, href, children }: { variant: Variant; target: string; href: string; children: React.ReactNode }) {
   return variant === "drawer"
-    ? <button type="button" data-bs-target={`#${target}`} data-bs-toggle="offcanvas" className="tf-btn btn-out-line-dark2 w-100">{children}</button>
+    ? <button type="button" data-bs-target={`#${target}`} data-bs-toggle="offcanvas" className="tf-btn btn-out-line-dark2 w-100 justify-content-center">{children}</button>
     : <Link href={href} className="tf-btn btn-out-line-dark2 w-100 justify-content-center">{children}</Link>;
 }
 
@@ -56,12 +57,26 @@ export function LoginForm({ variant = "page", next }: { variant?: Variant; next?
       </div>
       <div className="bot">
         {variant === "drawer"
-          ? <a href="#resetPass" data-bs-toggle="offcanvas" className="text text-sm text-main-2">Quên mật khẩu?</a>
-          : <Link href={ROUTES.forgotPassword} className="text text-sm text-main-2">Quên mật khẩu?</Link>}
-        <div className="button-wrap">
-          <button className="subscribe-button tf-btn animate-btn d-inline-flex bg-dark-2 w-100" type="submit" disabled={dangNhap.isPending}>
+          ? <a href="#resetPass" data-bs-toggle="offcanvas" className="text text-sm text-main-2 d-inline-block mb-3">Quên mật khẩu?</a>
+          : <Link href={ROUTES.forgotPassword} className="text text-sm text-main-2 d-inline-block mb-3">Quên mật khẩu?</Link>}
+        <div className="button-wrap d-flex flex-column gap-3 w-100">
+          <button className="subscribe-button tf-btn animate-btn d-inline-flex bg-dark-2 w-100 justify-content-center" type="submit" disabled={dangNhap.isPending}>
             {dangNhap.isPending ? "Đang đăng nhập..." : "Đăng nhập"}
           </button>
+
+          <div className="relative my-1 flex items-center justify-center w-100">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-line" />
+            </div>
+            <span className="relative bg-white px-3 text-xs uppercase tracking-wider text-text-3">
+              Hoặc tiếp tục với
+            </span>
+          </div>
+
+          <div className="w-100 d-flex justify-content-center">
+            <GoogleLoginButton variant={variant} next={next} text="signin_with" />
+          </div>
+
           <NutPhu variant={variant} target="register" href={ROUTES.register}>Tạo tài khoản</NutPhu>
         </div>
       </div>
@@ -115,10 +130,24 @@ export function RegisterForm({ variant = "page" }: { variant?: Variant }) {
           </label>
         </div>
         <FieldMessage message={e.agree?.message} />
-        <div className="button-wrap">
-          <button className="subscribe-button tf-btn animate-btn bg-dark-2 w-100" type="submit" disabled={dangKy.isPending}>
+        <div className="button-wrap d-flex flex-column gap-3 w-100">
+          <button className="subscribe-button tf-btn animate-btn bg-dark-2 w-100 justify-content-center" type="submit" disabled={dangKy.isPending}>
             {dangKy.isPending ? "Đang tạo..." : "Đăng ký"}
           </button>
+
+          <div className="relative my-1 flex items-center justify-center w-100">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-line" />
+            </div>
+            <span className="relative bg-white px-3 text-xs uppercase tracking-wider text-text-3">
+              Hoặc tiếp tục với
+            </span>
+          </div>
+
+          <div className="w-100 d-flex justify-content-center">
+            <GoogleLoginButton variant={variant} text="signup_with" />
+          </div>
+
           <NutPhu variant={variant} target="login" href={ROUTES.login}>Đăng nhập</NutPhu>
         </div>
       </div>

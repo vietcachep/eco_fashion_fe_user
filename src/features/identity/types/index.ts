@@ -28,3 +28,4 @@ export interface AuthMessageResponse {
 export interface LoginRequest { email: string; password: string; }
 export interface RegisterRequest { email: string; password: string; full_name: string; phone?: string; }
 export interface ForgotPasswordRequest { email: string; }
+export interface GoogleLoginRequest { idToken: string; }

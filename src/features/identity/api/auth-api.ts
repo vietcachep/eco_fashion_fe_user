@@ -1,9 +1,11 @@
 import { api } from "@/lib/api";
 import type { ApiResponse } from "@/types/common";
 import type {
-  AuthMessageResponse, AuthUserResponse, ForgotPasswordRequest, LoginRequest, RegisterRequest, TokenPairResponse,
+  AuthMessageResponse, AuthUserResponse, ForgotPasswordRequest, LoginRequest, RegisterOtpRequest, RegisterRequest, ResetPasswordRequest, TokenPairResponse,
 } from "@/features/identity/types";
-import { mockChangePassword, mockForgotPassword, mockGoogleLogin, mockLogin, mockRegister, mockUpdateProfile } from "@/features/identity/mock/auth-mock";
+import {
+  mockChangePassword, mockForgotPassword, mockGoogleLogin, mockLogin, mockRegister, mockResetPassword, mockSendRegisterOtp, mockUpdateProfile,
+} from "@/features/identity/mock/auth-mock";
 
 /*
  * API xác thực.
@@ -64,10 +66,16 @@ export async function loginWithGoogle(idToken: string): Promise<TokenPairRespons
   return chuanHoaTokenPair(bocData(res, "loginWithGoogle"));
 }
 
-/* Đăng ký: eco_backend trả thông báo (chờ OTP); NestJS eco_fashion trả luôn cặp token (đăng nhập ngay). */
+export async function sendRegisterOtp(body: RegisterOtpRequest): Promise<AuthMessageResponse> {
+  if (CHE_DO_MOCK) return mockSendRegisterOtp(body.email);
+  const res = await api.post<ApiResponse<BatKy | null>>("/api/v1/auth/register-otp", body);
+  return { message: res.data.message ?? "Mã xác nhận OTP đã được gửi đến email" };
+}
+
+/* Đăng ký kèm mã OTP: tạo tài khoản + trả về phiên đăng nhập. */
 export async function register(body: RegisterRequest): Promise<AuthMessageResponse & { tokens?: TokenPairResponse }> {
   if (CHE_DO_MOCK) return mockRegister({ email: body.email, password: body.password, full_name: body.full_name, phone: body.phone });
-  const res = await api.post<ApiResponse<BatKy>>("/api/v1/auth/register", { ...body, fullName: body.full_name });
+  const res = await api.post<ApiResponse<BatKy>>("/api/v1/auth/register", { ...body, fullName: body.full_name, otp: body.otp });
   const data = bocData(res, "register");
   if (lay(data, "access_token", "accessToken")) return { message: res.data.message ?? "Đăng ký thành công", tokens: chuanHoaTokenPair(data) };
   return { message: lay<string>(data, "message") ?? res.data.message ?? "Đăng ký thành công" };
@@ -76,7 +84,13 @@ export async function register(body: RegisterRequest): Promise<AuthMessageRespon
 export async function forgotPassword(body: ForgotPasswordRequest): Promise<AuthMessageResponse> {
   if (CHE_DO_MOCK) return mockForgotPassword(body.email);
   const res = await api.post<ApiResponse<BatKy | null>>("/api/v1/auth/forgot-password", body);
-  return { message: (res.data.data && lay<string>(res.data.data, "message")) || res.data.message || "Đã gửi hướng dẫn đặt lại mật khẩu" };
+  return { message: (res.data.data && lay<string>(res.data.data, "message")) || res.data.message || "Đã gửi mã xác nhận OTP qua email" };
+}
+
+export async function resetPassword(body: ResetPasswordRequest): Promise<AuthMessageResponse> {
+  if (CHE_DO_MOCK) return mockResetPassword(body.email, body.otp, body.newPassword);
+  const res = await api.post<ApiResponse<BatKy | null>>("/api/v1/auth/reset-password", body);
+  return { message: res.data.message ?? "Đặt lại mật khẩu thành công" };
 }
 
 export async function logout(refreshToken: string): Promise<void> {

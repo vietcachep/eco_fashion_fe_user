@@ -27,3 +27,19 @@ export type RegisterInput = z.infer<typeof registerSchema>;
 
 export const forgotPasswordSchema = z.object({ email });
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+
+export const resetPasswordSchema = z.object({
+  email,
+  otp: z.string().trim().length(6, "Mã OTP phải đúng 6 chữ số"),
+  newPassword: password,
+  confirmNewPassword: z.string(),
+}).refine((d) => d.newPassword === d.confirmNewPassword, {
+  path: ["confirmNewPassword"],
+  message: "Mật khẩu nhập lại không khớp",
+});
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+
+export const registerOtpSchema = z.object({
+  otp: z.string().trim().length(6, "Mã OTP phải đúng 6 chữ số"),
+});
+export type RegisterOtpInput = z.infer<typeof registerOtpSchema>;

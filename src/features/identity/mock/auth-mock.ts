@@ -57,9 +57,31 @@ export async function mockRegister(u: MockUser): Promise<{ message: string }> {
   return { message: "Đăng ký thành công (dữ liệu mẫu) — đăng nhập ngay nhé" };
 }
 
+export async function mockSendRegisterOtp(email: string): Promise<{ message: string }> {
+  await cho(400);
+  if ([...TAI_KHOAN_DEMO, ...docDangKy()].some((x) => x.email.toLowerCase() === email.toLowerCase())) {
+    throw new Error("Email này đã được đăng ký tài khoản");
+  }
+  return { message: "Mã xác nhận OTP (mẫu: 123456) đã được gửi đến email" };
+}
+
 export async function mockForgotPassword(email: string): Promise<{ message: string }> {
   await cho(400);
-  return { message: `Nếu ${email} có trong hệ thống, hướng dẫn đặt lại mật khẩu đã được gửi (dữ liệu mẫu — chưa gửi thật).` };
+  return { message: `Nếu ${email} có trong hệ thống, mã xác nhận OTP (mẫu: 123456) đã được gửi đến email.` };
+}
+
+export async function mockResetPassword(email: string, otp: string, newPassword: string): Promise<{ message: string }> {
+  await cho(400);
+  if (otp !== "123456") {
+    throw new Error("Mã xác nhận OTP không đúng hoặc đã hết hạn (dữ liệu mẫu dùng: 123456)");
+  }
+  const ds = docDangKy();
+  const i = ds.findIndex((x) => x.email.toLowerCase() === email.toLowerCase());
+  if (i >= 0) {
+    ds[i] = { ...ds[i], password: newPassword };
+    localStorage.setItem(KHOA, JSON.stringify(ds));
+  }
+  return { message: "Đã đặt lại mật khẩu thành công" };
 }
 
 /* Cập nhật hồ sơ / đổi mật khẩu MẪU — ghi vào danh sách tài khoản tự đăng ký; tài khoản demo cố định chỉ đổi trong phiên. */

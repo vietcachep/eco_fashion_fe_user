@@ -146,6 +146,12 @@ export function GoogleLoginButton({
           <span>{dangNhapGoogle.isPending ? "Đang xử lý..." : "Tiếp tục bằng Google (Demo)"}</span>
         </button>
       )}
+
+      {dangNhapGoogle.isError && (
+        <div className="alert alert-danger py-1.5 px-3 mt-2 mb-0 text-xs rounded-3 text-center w-100" role="alert">
+          {dangNhapGoogle.error instanceof Error ? dangNhapGoogle.error.message : "Đăng nhập Google thất bại"}
+        </div>
+      )}
     </div>
   );
 }

@@ -27,12 +27,20 @@ const goi = <T,>(path: string, params?: Record<string, unknown>) => api.get<ApiR
 
 export async function fetchCategories(): Promise<CategoryResponse[]> {
   if (CHE_DO_MOCK) return DANH_MUC;
-  return (await goi<BeCategory[]>("/categories")).map(chuanHoaDanhMuc);
+  try {
+    return (await goi<BeCategory[]>("/categories")).map(chuanHoaDanhMuc);
+  } catch {
+    return DANH_MUC;
+  }
 }
 
 export async function fetchCollections(): Promise<CollectionResponse[]> {
   if (CHE_DO_MOCK) return BO_SUU_TAP;
-  return (await goi<BeCollection[]>("/collections")).map(chuanHoaBoSuuTap);
+  try {
+    return (await goi<BeCollection[]>("/collections")).map(chuanHoaBoSuuTap);
+  } catch {
+    return BO_SUU_TAP;
+  }
 }
 
 /* Dữ liệu menu header/mobile — BE lỗi thì menu vẫn hiện (không có danh mục) thay vì cả site 500. */
@@ -101,13 +109,17 @@ function fetchProductsMock(query: ProductQuery): ProductPage {
 
 export async function fetchProducts(query: ProductQuery, pageSize = PRODUCT_PAGE_SIZE): Promise<ProductPage> {
   if (CHE_DO_MOCK) return fetchProductsMock(query);
-  const trang = await goi<BePage<BeCard>>("/products", {
-    q: query.q, category: query.category, gender: query.gender, size: query.size, color: await maMau(query.color),
-    minPrice: query.minPrice, maxPrice: query.maxPrice, sale: query.sale ? "true" : undefined, sort: query.sort,
-    page: query.page ?? 1, pageSize,
-  });
-  const p = chuanHoaTrang(trang, chuanHoaCard);
-  return { items: p.items, page: p.page, total_items: p.total_items, total_pages: Math.max(1, p.total_pages) };
+  try {
+    const trang = await goi<BePage<BeCard>>("/products", {
+      q: query.q, category: query.category, gender: query.gender, size: query.size, color: await maMau(query.color),
+      minPrice: query.minPrice, maxPrice: query.maxPrice, sale: query.sale ? "true" : undefined, sort: query.sort,
+      page: query.page ?? 1, pageSize,
+    });
+    const p = chuanHoaTrang(trang, chuanHoaCard);
+    return { items: p.items, page: p.page, total_items: p.total_items, total_pages: Math.max(1, p.total_pages) };
+  } catch {
+    return fetchProductsMock(query);
+  }
 }
 
 /* Dải sản phẩm trên trang chủ — chỉ cần `items`, cố ý không trả tổng số. */

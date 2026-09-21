@@ -26,6 +26,8 @@ export interface AuthMessageResponse {
 }
 
 export interface LoginRequest { email: string; password: string; }
-export interface RegisterRequest { email: string; password: string; full_name: string; phone?: string; }
+export interface RegisterOtpRequest { email: string; }
+export interface RegisterRequest { email: string; password: string; full_name: string; phone?: string; otp: string; }
 export interface ForgotPasswordRequest { email: string; }
+export interface ResetPasswordRequest { email: string; otp: string; newPassword: string; }
 export interface GoogleLoginRequest { idToken: string; }

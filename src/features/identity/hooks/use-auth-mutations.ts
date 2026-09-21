@@ -4,8 +4,10 @@ import { useMutation } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import { toast } from "sonner";
 import { apiErrorMessage, apiMessage } from "@/lib/api-error";
-import { changePassword, deleteAvatar, forgotPassword, login, loginWithGoogle, logout, register, updateAvatar, updateProfile } from "@/features/identity/api/auth-api";
-import type { ForgotPasswordInput, LoginInput, RegisterInput } from "@/features/identity/schemas/auth-schemas";
+import {
+  changePassword, deleteAvatar, forgotPassword, login, loginWithGoogle, logout, register, resetPassword, sendRegisterOtp, updateAvatar, updateProfile,
+} from "@/features/identity/api/auth-api";
+import type { ForgotPasswordInput, LoginInput, RegisterInput, ResetPasswordInput } from "@/features/identity/schemas/auth-schemas";
 import { useAuthStore } from "@/stores/auth-store";
 
 /*
@@ -30,39 +32,70 @@ function loi(err: unknown, macDinh: string): string {
 export function useLogin() {
   return useMutation({
     mutationFn: async (input: LoginInput) => {
-      const t = await login({ email: input.email, password: input.password });
-      useAuthStore.getState().setTokens(t.access_token, t.refresh_token);
-      useAuthStore.getState().setUser(t.user);
-      return t.user;
+      try {
+        const t = await login({ email: input.email, password: input.password });
+        useAuthStore.getState().setTokens(t.access_token, t.refresh_token);
+        useAuthStore.getState().setUser(t.user);
+        return t.user;
+      } catch (err) {
+        throw new Error(loi(err, "Email hoặc mật khẩu không đúng"));
+      }
     },
-    onError: (err) => toast.error(loi(err, "Email hoặc mật khẩu không đúng")),
+    onError: (err) => toast.error(err instanceof Error ? err.message : "Email hoặc mật khẩu không đúng"),
   });
 }
 
 export function useGoogleLogin() {
   return useMutation({
     mutationFn: async (idToken: string) => {
-      const t = await loginWithGoogle(idToken);
-      useAuthStore.getState().setTokens(t.access_token, t.refresh_token);
-      useAuthStore.getState().setUser(t.user);
-      return t.user;
+      try {
+        const t = await loginWithGoogle(idToken);
+        useAuthStore.getState().setTokens(t.access_token, t.refresh_token);
+        useAuthStore.getState().setUser(t.user);
+        return t.user;
+      } catch (err) {
+        throw new Error(loi(err, "Đăng nhập Google thất bại"));
+      }
     },
-    onError: (err) => toast.error(loi(err, "Đăng nhập Google thất bại")),
+    onError: (err) => toast.error(err instanceof Error ? err.message : "Đăng nhập Google thất bại"),
+  });
+}
+
+export function useSendRegisterOtp() {
+  return useMutation({
+    mutationFn: async (email: string) => {
+      try {
+        return await sendRegisterOtp({ email });
+      } catch (err) {
+        throw new Error(loi(err, "Không gửi được mã xác nhận OTP"));
+      }
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : "Không gửi được mã xác nhận OTP"),
   });
 }
 
 export function useRegister() {
   return useMutation({
-    mutationFn: async (input: RegisterInput) => {
-      const r = await register({ email: input.email, password: input.password, full_name: input.fullName, phone: input.phone || undefined });
-      /* Backend trả luôn token (NestJS) -> đăng nhập ngay. */
-      if (r.tokens) {
-        useAuthStore.getState().setTokens(r.tokens.access_token, r.tokens.refresh_token);
-        useAuthStore.getState().setUser(r.tokens.user);
+    mutationFn: async (input: RegisterInput & { otp: string }) => {
+      try {
+        const r = await register({
+          email: input.email,
+          password: input.password,
+          full_name: input.fullName,
+          phone: input.phone || undefined,
+          otp: input.otp,
+        });
+        /* Backend trả luôn token (NestJS) -> đăng nhập ngay. */
+        if (r.tokens) {
+          useAuthStore.getState().setTokens(r.tokens.access_token, r.tokens.refresh_token);
+          useAuthStore.getState().setUser(r.tokens.user);
+        }
+        return r;
+      } catch (err) {
+        throw new Error(loi(err, "Đăng ký thất bại"));
       }
-      return r;
     },
-    onError: (err) => toast.error(loi(err, "Đăng ký thất bại")),
+    onError: (err) => toast.error(err instanceof Error ? err.message : "Đăng ký thất bại"),
   });
 }
 
@@ -77,8 +110,27 @@ export function useLogout() {
 
 export function useForgotPassword() {
   return useMutation({
-    mutationFn: (input: ForgotPasswordInput) => forgotPassword({ email: input.email }),
-    onError: (err) => toast.error(loi(err, "Gửi yêu cầu thất bại")),
+    mutationFn: async (input: ForgotPasswordInput) => {
+      try {
+        return await forgotPassword({ email: input.email });
+      } catch (err) {
+        throw new Error(loi(err, "Gửi yêu cầu thất bại"));
+      }
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : "Gửi yêu cầu thất bại"),
+  });
+}
+
+export function useResetPassword() {
+  return useMutation({
+    mutationFn: async (input: ResetPasswordInput) => {
+      try {
+        return await resetPassword({ email: input.email, otp: input.otp, newPassword: input.newPassword });
+      } catch (err) {
+        throw new Error(loi(err, "Đặt lại mật khẩu thất bại"));
+      }
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : "Đặt lại mật khẩu thất bại"),
   });
 }
 

@@ -3,6 +3,7 @@ import type {
   ProductVariantResponse,
 } from "@/features/catalog/types";
 import type { MoneyResponse } from "@/types/common";
+import { CUA_HANG, tomTatCuaHang } from "@/features/catalog/mock/shops";
 
 /*
  * DỮ LIỆU MẪU — 24 sản phẩm, thay bằng `GET /products` khi có backend.
@@ -83,6 +84,7 @@ function nhan(g: Goc): string | null {
   return null;
 }
 
+/* Chia sản phẩm cho 5 shop mẫu theo vòng tròn (id -> shop), ổn định giữa các lần build/SSR. */
 function theCard(g: Goc): ProductCardResponse {
   return {
     id: String(g.id), slug: g.slug, name: g.name, category_slug: g.cat, gender: g.gender,
@@ -92,6 +94,8 @@ function theCard(g: Goc): ProductCardResponse {
     colors: g.mau.map((m) => ({ ...m, image_url: anhMau(g.slug, m) })), sizes: g.size,
     avg_rating: g.rating, review_count: g.reviews, sold_count: g.sold,
     is_new: Boolean(g.moi), badge: nhan(g),
+    shop: tomTatCuaHang(CUA_HANG[(g.id - 1) % CUA_HANG.length]),
+    in_stock: true,
   };
 }
 
@@ -106,7 +110,7 @@ function bienThe(g: Goc): ProductVariantResponse[] {
       id: String(g.id * 100 + i), color: m.name, size: s,
       sku: `${g.slug.toUpperCase().slice(0, 8)}-${m.name.slice(0, 2).toUpperCase()}-${s}`,
       stock: (g.id + i) % 7 === 0 ? 0 : 5 + ((g.id * i) % 20),
-      price: tien(g.gia),
+      price: tien(g.gia), options: [],
     });
   }
   return ra;
@@ -132,6 +136,7 @@ export function chiTietSanPham(slug: string): ProductDetailResponse | null {
     variants: bienThe(g),
     material: g.chatLieu,
     care: ["Giặt máy nước lạnh", "Không dùng chất tẩy", "Phơi trong bóng râm", "Ủi nhiệt độ thấp"],
+    attribute_values: [],
   };
 }
 

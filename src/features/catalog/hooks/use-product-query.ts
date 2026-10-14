@@ -2,7 +2,6 @@
 
 import { useCallback, useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ROUTES } from "@/lib/constants";
 import { parseProductQuery, toSearchString } from "@/features/catalog/schemas/product-query-schema";
 import type { ProductQuery } from "@/features/catalog/types";
 
@@ -10,6 +9,10 @@ import type { ProductQuery } from "@/features/catalog/types";
  * Đọc/ghi bộ lọc trên URL từ Client Component (sidebar lọc, ô sắp xếp, chip
  * "đang lọc"). Mọi thay đổi bộ lọc đều reset về trang 1 — trang 5 của một
  * tập kết quả khác là vô nghĩa.
+ *
+ * Điều hướng LUÔN ở lại `pathname` hiện tại (không ép về `/products`): hook này chỉ được các đảo client
+ * của lưới sản phẩm gọi (`product-sidebar`, `product-list-body`, `filter-modal`), và từ PLAN-0008 các đảo
+ * đó được TÁI DÙNG nguyên cho `/shop/[slug]` — ép cứng path sẽ nhảy khách ra khỏi trang gian hàng.
  *
  * `router.push` (không `replace`) để Back quay về bộ lọc trước — hành vi
  * người dùng chờ đợi ở trang danh sách.
@@ -23,8 +26,7 @@ export function useProductQuery() {
 
   const dieuHuong = useCallback(
     (moi: ProductQuery) => {
-      const path = pathname.startsWith(ROUTES.products) ? pathname : ROUTES.products;
-      router.push(`${path}${toSearchString(moi)}`, { scroll: false });
+      router.push(`${pathname}${toSearchString(moi)}`, { scroll: false });
     },
     [pathname, router],
   );

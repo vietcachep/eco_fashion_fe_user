@@ -63,5 +63,6 @@ export function toSearchString(query: ProductQuery): string {
   return s ? `?${s}` : "";
 }
 
-/* Biên thanh kéo giá (rc-slider) — quyết định bán hàng, để một chỗ dễ đổi. */
-export const PRICE_RANGE = { min: 0, max: 1_000_000, step: 10_000 } as const;
+/* Khoảng giá của catalog MẪU (chế độ không backend). Có backend thì khoảng giá thật lấy từ `GET /products/filters`
+   (xem `server/catalog-data.ts fetchFilterOptions`) và thanh kéo chạy theo các mốc ở `lib/price-steps.ts`. */
+export const PRICE_RANGE = { min: 0, max: 1_000_000 } as const;

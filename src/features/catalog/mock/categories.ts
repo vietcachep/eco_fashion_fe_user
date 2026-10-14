@@ -6,31 +6,32 @@ import type { CategoryResponse, CollectionResponse } from "@/features/catalog/ty
  * nguồn từng tấm ghi ở `public/images/NGUON-ANH.md`.
  */
 export const DANH_MUC: CategoryResponse[] = [
-  { id: "1", slug: "ao-thun",   name: "Áo thun",   image_url: "/images/categories/ao-thun.jpg",   product_count: 6 },
-  { id: "2", slug: "ao-so-mi",  name: "Áo sơ mi",  image_url: "/images/categories/ao-so-mi.jpg",  product_count: 4 },
-  { id: "3", slug: "quan-jean", name: "Quần jean", image_url: "/images/categories/quan-jean.jpg", product_count: 4 },
-  { id: "4", slug: "quan-short", name: "Quần short", image_url: "/images/categories/quan-short.jpg", product_count: 2 },
-  { id: "5", slug: "vay",       name: "Váy",       image_url: "/images/categories/vay.jpg",       product_count: 2 },
-  { id: "6", slug: "dam",       name: "Đầm",       image_url: "/images/categories/dam.jpg",       product_count: 3 },
-  { id: "7", slug: "ao-khoac",  name: "Áo khoác",  image_url: "/images/categories/ao-khoac.jpg",  product_count: 3 },
+  { id: "1", slug: "ao-thun",   name: "Áo thun",   image_url: "/images/categories/ao-thun.jpg",   product_count: 6, parent_id: null, attribute_mode: "legacy_fashion" },
+  { id: "2", slug: "ao-so-mi",  name: "Áo sơ mi",  image_url: "/images/categories/ao-so-mi.jpg",  product_count: 4, parent_id: null, attribute_mode: "legacy_fashion" },
+  { id: "3", slug: "quan-jean", name: "Quần jean", image_url: "/images/categories/quan-jean.jpg", product_count: 4, parent_id: null, attribute_mode: "legacy_fashion" },
+  { id: "4", slug: "quan-short", name: "Quần short", image_url: "/images/categories/quan-short.jpg", product_count: 2, parent_id: null, attribute_mode: "legacy_fashion" },
+  { id: "5", slug: "vay",       name: "Váy",       image_url: "/images/categories/vay.jpg",       product_count: 2, parent_id: null, attribute_mode: "legacy_fashion" },
+  { id: "6", slug: "dam",       name: "Đầm",       image_url: "/images/categories/dam.jpg",       product_count: 3, parent_id: null, attribute_mode: "legacy_fashion" },
+  { id: "7", slug: "ao-khoac",  name: "Áo khoác",  image_url: "/images/categories/ao-khoac.jpg",  product_count: 3, parent_id: null, attribute_mode: "legacy_fashion" },
 ];
 
+/* PLAN-0016 — bộ sưu tập theo NGÀNH HÀNG (không theo giới tính), khớp `eco_backend scripts/seed/catalog.seed.ts`. */
 export const BO_SUU_TAP: CollectionResponse[] = [
   {
-    id: "1", slug: "nu", name: "Thời trang nữ", tagline: "Nhẹ nhàng cho ngày mới",
-    image_url: "/images/collections/nu.jpg", query: { gender: "nu" },
+    id: "1", slug: "thoi-trang", name: "Thời trang", tagline: "Phong cách mỗi ngày",
+    image_url: "/images/collections/thoi-trang.jpg", query: { category: "ao-thun" },
   },
   {
-    id: "2", slug: "nam", name: "Thời trang nam", tagline: "Đơn giản mà chỉn chu",
-    image_url: "/images/collections/nam.jpg", query: { gender: "nam" },
+    id: "2", slug: "dien-thoai-cong-nghe", name: "Điện thoại & Công nghệ", tagline: "Công nghệ trong tầm tay",
+    image_url: "/images/collections/dien-thoai-cong-nghe.jpg", query: { category: "dien-thoai" },
   },
   {
-    id: "3", slug: "hang-moi", name: "Hàng mới về", tagline: "Bộ sưu tập mùa này",
-    image_url: "/images/collections/hang-moi.jpg", query: { tag: "new" },
+    id: "3", slug: "nha-cua-doi-song", name: "Nhà cửa & Đời sống", tagline: "Tiện nghi cho tổ ấm",
+    image_url: "/images/collections/nha-cua-doi-song.jpg", query: { category: "do-dung-nha-bep" },
   },
   {
-    id: "4", slug: "dam-du-tiec", name: "Đầm dự tiệc", tagline: "Toả sáng mọi buổi tối",
-    image_url: "/images/collections/dam.jpg", query: { category: "dam" },
+    id: "4", slug: "sac-dep-suc-khoe", name: "Sắc đẹp & Sức khoẻ", tagline: "Chăm sóc bản thân mỗi ngày",
+    image_url: "/images/collections/sac-dep-suc-khoe.jpg", query: { category: "cham-soc-da" },
   },
 ];
 

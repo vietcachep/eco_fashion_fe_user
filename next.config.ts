@@ -26,6 +26,7 @@ function mauHostApi(): { protocol: "http" | "https"; hostname: string; port: str
 const hostApi = mauHostApi();
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "res.cloudinary.com" },

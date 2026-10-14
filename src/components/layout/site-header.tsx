@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ROUTES } from "@/lib/constants";
 import { Nav, type NavData } from "@/components/layout/nav";
 import { Logo } from "@/components/layout/logo";
+import { NotificationBell } from "@/features/system/components/notifications/notification-bell";
 import { useCartStore, chonSoMon } from "@/stores/cart-store";
 import { useWishlistStore } from "@/stores/wishlist-store";
 import { useAuthStore } from "@/stores/auth-store";
@@ -11,7 +12,7 @@ import { useAuthStore } from "@/stores/auth-store";
 /*
  * Header — `Header1` của Vineta: nút menu mobile (offcanvas #mobileMenu), logo,
  * menu giữa, bốn icon phải (tìm kiếm = modal #search, tài khoản = offcanvas
- * #login, yêu thích, giỏ = offcanvas #shoppingCart). Ẩn/hiện khi cuộn do
+ * #login, yêu thích, chuông thông báo (khi đã đăng nhập), giỏ = offcanvas #shoppingCart). Ẩn/hiện khi cuộn do
  * `VinetaRuntime` xử lý qua `header#header`.
  */
 export function SiteHeader({ parentClass = "header-default", nav }: { parentClass?: string; nav: NavData }) {
@@ -54,6 +55,8 @@ export function SiteHeader({ parentClass = "header-default", nav }: { parentClas
                   <span className="count-box">{soYeuThich}</span>
                 </Link>
               </li>
+              {/* Chuông thông báo: tự trả null khi chưa đăng nhập / chế độ mẫu (không để lại <li> rỗng chiếm khe gap). Giữ hiện ở mobile (xem `.nav-notification`). */}
+              <NotificationBell />
               <li className="nav-cart">
                 <a href="#shoppingCart" data-bs-toggle="offcanvas" className="nav-icon-item" aria-label="Giỏ hàng">
                   <i className="icon icon-cart" />

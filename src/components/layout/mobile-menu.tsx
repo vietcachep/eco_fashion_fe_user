@@ -13,9 +13,9 @@ const dongPopup = () => { void hideOverlays(); };
 
 /*
  * Menu mobile — offcanvas trái `#mobileMenu` của Vineta: ô tìm kiếm, menu xổ
- * bằng Bootstrap collapse (cùng cấu trúc với menu desktop: Nữ, Nam, Bộ sưu
- * tập, Giảm giá, Thử đồ AI, Hỗ trợ), nhóm icon yêu thích/đăng nhập, thông tin
- * cửa hàng. Nhóm hai cấp (Nữ → Danh mục / Gợi ý) dùng `sub-menu-level-2`.
+ * bằng Bootstrap collapse (cùng cấu trúc với menu desktop: Danh mục, Bộ sưu
+ * tập, Giảm giá, AI, Hỗ trợ), nhóm icon yêu thích/đăng nhập, thông tin
+ * cửa hàng. Nhóm hai cấp (Danh mục → Danh mục / Khám phá) dùng `sub-menu-level-2`.
  */
 function MucXo({ id, label, nhom, pathname }: { id: string; label: string; nhom: NhomMenu[]; pathname: string }) {
   const tatCa = nhom.flatMap((n) => n.items);
@@ -83,11 +83,11 @@ export function MobileMenu({ danhMuc }: { danhMuc: CategoryResponse[] }) {
             </form>
             <ul className="nav-ul-mb" id="wrapper-menu-navigation">
               <li className="nav-mb-item"><Link onClick={dongPopup} href={ROUTES.home} className={cn("mb-menu-link", pathname === "/" && "menuActive")}>Trang chủ</Link></li>
-              <MucXo id="mb-nu" label="Nữ" nhom={menu.nu} pathname={pathname} />
-              <MucXo id="mb-nam" label="Nam" nhom={menu.nam} pathname={pathname} />
+              <MucXo id="mb-dm" label="Danh mục" nhom={menu.danhMuc} pathname={pathname} />
               <MucXo id="mb-bst" label="Bộ sưu tập" nhom={menu.boSuuTap} pathname={pathname} />
               <li className="nav-mb-item"><Link onClick={dongPopup} href={`${ROUTES.products}?sale=1`} className="mb-menu-link">Giảm giá</Link></li>
-              <MucXo id="mb-ai" label="Thử đồ AI" nhom={[{ heading: "", items: MENU_AI }]} pathname={pathname} />
+              <li className="nav-mb-item"><Link onClick={dongPopup} href={ROUTES.shops} className={cn("mb-menu-link", pathname.startsWith(ROUTES.shops) && "menuActive")}>Gian hàng</Link></li>
+              <MucXo id="mb-ai" label="AI" nhom={[{ heading: "", items: MENU_AI }]} pathname={pathname} />
               <MucXo id="mb-ho-tro" label="Hỗ trợ" nhom={[{ heading: "", items: MENU_HO_TRO }]} pathname={pathname} />
             </ul>
           </div>

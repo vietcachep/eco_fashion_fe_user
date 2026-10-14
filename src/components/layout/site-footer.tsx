@@ -18,7 +18,8 @@ const VE_CHUNG_TOI = [
   { text: "Giới thiệu", href: ROUTES.about },
   { text: "Liên hệ", href: ROUTES.contact },
   { text: "Câu hỏi thường gặp", href: ROUTES.faq },
-  { text: "Gợi ý phối đồ AI", href: ROUTES.aiSuggest },
+  { text: "Gian hàng", href: ROUTES.shops },
+  { text: "Trợ lý mua sắm AI", href: ROUTES.aiAssistant },
 ];
 const HO_TRO = [
   { text: "Chính sách bảo mật", href: ROUTES.privacy },

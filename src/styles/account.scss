@@ -4,6 +4,9 @@
  * Import sau fitly.scss trong app/layout.tsx.
  */
 .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: 0; }
+/* Class `min-w-0` (cho phép flex/grid item co lại để `text-truncate` có tác dụng) được nhiều màn dùng từ thời Tailwind nhưng
+   chưa từng được định nghĩa sau khi bỏ Tailwind — không có nó, tên sản phẩm dài đẩy thẻ đơn hàng tràn ra ngoài màn 390px. */
+.min-w-0 { min-width: 0; }
 /* Vineta đặt <button> mặc định = nút đen chữ trắng, căn giữa. Các "nút phẳng" (thẻ chọn địa chỉ,
    dòng lý do, sao, nút mở mã) phải reset lại — nếu không chữ trắng biến mất trên nền trắng. */
 .btn-plain { background: none; border: 0; padding: 0; border-radius: 0; color: inherit; font: inherit; line-height: inherit; justify-content: flex-start; gap: 0; }
@@ -228,3 +231,66 @@
 .box-ip-discount.cart-voucher { display: block; }
 .tf-mini-cart-tool-openable .cart-voucher-tool { padding: 20px 24px; max-height: calc(100vh - 120px); overflow: hidden; }
 .tf-mini-cart-tool-openable .cart-voucher-tool .voucher-list .tf-btn { height: auto; }
+
+/* --- Chấm số thông báo chưa đọc trên menu tài khoản (cột trái + dải mobile) --- */
+.acc-count { margin-left: auto; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--primary); color: var(--white); font-size: 11px; font-weight: 600; line-height: 18px; text-align: center; flex: 0 0 auto; }
+.acc-pill .acc-count { margin-left: 2px; }
+
+/* --- Thông báo trong-app: trang /account/notifications + chuông ở header (features/system/components/notifications) --- */
+.noti-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 16px; margin-bottom: 20px; }
+.noti-head .title-account { margin-bottom: 4px; }
+.noti-head-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.noti-head-actions .acc-pill { padding: 6px 14px; line-height: 20px; }
+
+.noti-list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 16px; background: var(--white); overflow: hidden; }
+.noti-list > li + li { border-top: 1px solid var(--line); }
+.noti-list.is-flush { border: 0; border-radius: 0; }
+/* `.noti-item` là <a>, <button> hoặc <div> tuỳ thông báo có link / chưa đọc — reset kiểu nút đen chữ trắng của Vineta cho <button>. */
+.noti-item { display: flex; align-items: flex-start; justify-content: flex-start; gap: 12px; width: 100%; margin: 0; padding: 14px 16px; border: 0; border-radius: 0; background: var(--white); color: var(--dark); font-size: 14px; line-height: 20px; font-weight: 400; text-align: left; text-decoration: none; }
+a.noti-item, button.noti-item { cursor: pointer; }
+a.noti-item:hover, button.noti-item:hover { background: var(--surface-2); color: var(--dark); }
+a.noti-item:focus-visible, button.noti-item:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+.noti-item.is-unread { background: #fffaf9; }
+a.noti-item.is-unread:hover, button.noti-item.is-unread:hover { background: #fff3f1; }
+.noti-item.is-compact { padding: 12px 14px; }
+.noti-icon { flex: 0 0 40px; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); color: var(--text-3); font-size: 16px; }
+.noti-icon svg { width: 18px; height: 18px; }
+.noti-icon .icon { font-size: 16px; }
+.noti-icon.is-order { background: var(--primary-4); color: var(--primary); }
+.noti-icon.is-payment { background: rgba(49, 208, 170, .14); color: #0f8a6a; }
+.noti-icon.is-promotion, .noti-icon.is-review { background: #fff4e5; color: #b25e00; }
+.noti-icon.is-ai { background: var(--dark); color: var(--white); }
+.noti-item .placeholder.noti-icon { background: currentColor; color: var(--dark); }
+.noti-body { flex: 1 1 auto; min-width: 0; display: block; }
+.noti-title { display: block; font-size: 14px; line-height: 20px; font-weight: 500; overflow-wrap: anywhere; }
+.noti-item.is-unread .noti-title { font-weight: 600; }
+.noti-text { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; margin-top: 2px; font-size: 13px; line-height: 19px; color: var(--text-3); overflow-wrap: anywhere; }
+.noti-item.is-compact .noti-text { -webkit-line-clamp: 2; line-clamp: 2; }
+.noti-meta { display: flex; flex-wrap: wrap; gap: 0 6px; margin-top: 4px; font-size: 12px; line-height: 18px; color: var(--text-4); }
+.noti-dot { flex: 0 0 8px; width: 8px; height: 8px; margin-top: 6px; border-radius: 50%; background: var(--primary); }
+.noti-link-btn { background: none; border: 0; padding: 0; border-radius: 0; color: var(--primary); font-size: 13px; line-height: 18px; font-weight: 500; white-space: nowrap; cursor: pointer; }
+.noti-link-btn:hover { color: var(--primary); text-decoration: underline; }
+.noti-link-btn:disabled { opacity: .5; cursor: not-allowed; text-decoration: none; }
+
+/* Chuông ở header: nút thay cho <a> của `.nav-icon-item` (size/màu/hover do Vineta lo), số chưa đọc dùng `.count-box` sẵn có. */
+.nav-notification { position: relative; }
+.noti-bell { background: none; border: 0; padding: 0; margin: 0; border-radius: 0; gap: 0; color: inherit; line-height: 1; cursor: pointer; }
+.noti-bell svg { width: 1em; height: 1em; stroke-width: 1.6; }
+.noti-pop { position: absolute; z-index: 1000; top: calc(100% + 18px); right: -12px; width: 380px; max-width: calc(100vw - 24px); overflow: hidden; background: var(--white); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow-1); color: var(--dark); font-size: 14px; line-height: 20px; text-align: left; }
+.noti-pop-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.noti-pop-title { font-size: 15px; line-height: 22px; font-weight: 600; }
+.noti-pop-body { max-height: min(60vh, 420px); overflow-y: auto; overscroll-behavior: contain; }
+.noti-pop-empty { padding: 28px 16px; text-align: center; }
+.noti-pop-foot { border-top: 1px solid var(--line); }
+.noti-pop-all { display: block; padding: 12px 16px; text-align: center; font-size: 14px; line-height: 20px; font-weight: 500; color: var(--dark); }
+.noti-pop-all:hover { background: var(--surface-2); color: var(--primary); }
+/* Mobile: bỏ neo theo chuông, trải ngang dưới header (header là `position: sticky` nên là khung định vị của bảng). */
+@media (max-width: 767.98px) {
+  .nav-notification { position: static; }
+  .noti-pop { top: 100%; left: 12px; right: 12px; width: auto; max-width: none; border-top: 0; border-radius: 0 0 12px 12px; }
+  .noti-head-actions { width: 100%; }
+}
+@media (max-width: 575.98px) {
+  .noti-item { padding: 12px; gap: 10px; }
+  .noti-icon { flex-basis: 36px; width: 36px; height: 36px; }
+}

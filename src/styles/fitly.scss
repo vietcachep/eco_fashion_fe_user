@@ -113,3 +113,77 @@
 .chat-handoff-form { display: flex; gap: 6px; margin-top: 8px; }
 .chat-handoff-form input { flex: 1; min-width: 0; height: 32px; border: 1px solid var(--line-3); border-radius: 8px; padding: 0 10px; font-size: 13px; background: var(--white); }
 .chat-handoff-form input:focus { outline: 0; border-color: var(--primary); }
+
+/* PLAN-0016 — dải ngành hàng trang chủ (department-strip.tsx): lưới thẻ tự co giãn, không phụ thuộc số
+   lượng ngành hàng cố định (backend thêm ngành mới thì tự thêm thẻ, không vỡ layout). */
+.departments-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+.department-tile {
+  display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px;
+  padding: 28px 16px; border: 1px solid var(--line-3); border-radius: 16px; background: var(--white);
+  transition: border-color .25s, box-shadow .25s, transform .25s;
+  &:hover { border-color: var(--primary); box-shadow: var(--shadow-1); transform: translateY(-2px); }
+}
+.department-tile-icon { width: 56px; height: 56px; border-radius: 50%; background: var(--primary-4); color: var(--primary); display: grid; place-items: center; }
+.department-tile-name { font-weight: 600; font-size: 16px; color: var(--dark); }
+.department-tile-sub { font-size: 12px; color: var(--text-3); }
+
+/* PLAN-0016 — icon ngành hàng trong mega menu "Danh mục" (nav.tsx), cùng icon với dải ngành hàng trang chủ. */
+.menu-heading-nganh { display: flex; align-items: center; gap: 8px; }
+.menu-heading-icon { display: inline-flex; width: 26px; height: 26px; border-radius: 50%; background: var(--primary-4); color: var(--primary); align-items: center; justify-content: center; flex-shrink: 0; }
+.menu-heading-icon svg { width: 15px; height: 15px; }
+
+/* PLAN-0016 — sidebar lọc sản phẩm: nhóm category theo ngành hàng (product-sidebar.tsx), thay vì liệt kê
+   16 category phẳng lẫn lộn nhiều ngành hàng khác nhau. */
+.cate-group:not(:last-child) { margin-bottom: 14px; }
+.cate-group-heading { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .02em; color: var(--text-3); margin-bottom: 8px; }
+.cate-group-items { list-style: none; padding: 0; margin: 0; }
+.cate-group-items .cate-item:not(:last-child) { margin-bottom: 10px; }
+
+/* ===== PLAN-0008 CA-1 — catalog đa ngành hàng + gian hàng (storefront chạy API thật) ===== */
+
+/* Skeleton khớp layout (lưới sản phẩm, lưới gian hàng) — shimmer thuần CSS, tắt khi người dùng giảm chuyển động. */
+.fs-skeleton { background: linear-gradient(90deg, var(--surface) 25%, var(--surface-2) 37%, var(--surface) 63%); background-size: 400% 100%; animation: fs-shimmer 1.4s ease infinite; border-radius: 8px; }
+@keyframes fs-shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+@media (prefers-reduced-motion: reduce) { .fs-skeleton { animation: none; } }
+.fs-skeleton-bar { height: 40px; margin-bottom: 20px; }
+.fs-skeleton-card { display: grid; gap: 10px; }
+.fs-skeleton-img { aspect-ratio: 513 / 729; border-radius: 12px; }
+.fs-skeleton-line { height: 14px; &.short { width: 60%; } }
+.fs-skeleton-shop { height: 300px; border-radius: 16px; }
+
+/* Nút chọn biến thể dạng CHỮ cho ngành dynamic ("Đen", "128GB", "1920x1080 (Full HD)"): Vineta chỉ có nút size tròn 48px,
+   chữ dài sẽ tràn — đổi sang viên thuốc tự co giãn theo nội dung, giữ trạng thái active/disable của mẫu. */
+.variant-picker-item.variant-size .size-btn.size-btn-text.size-btn-text:not(.select-item) {
+  width: auto; min-width: 48px; height: auto; min-height: 40px; padding: 8px 16px; border-radius: 24px;
+  font-size: 14px; line-height: 20px; text-align: center;
+}
+
+/* Tab "Thông tin sản phẩm": cặp tên thuộc tính – giá trị (Thương hiệu, RAM, Xuất xứ…). */
+.product-attrs { margin: 0; }
+.product-attrs-row { display: grid; grid-template-columns: minmax(120px, 220px) 1fr; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.product-attrs-row:last-child { border-bottom: 0; }
+.product-attrs-row dt, .product-attrs-row dd { margin: 0; }
+@media (max-width: 575px) { .product-attrs-row { grid-template-columns: 1fr; gap: 2px; } }
+
+/* Phản hồi của gian hàng dưới một đánh giá. */
+.review-reply { margin-top: 12px; padding: 12px 14px; border-radius: 10px; background: var(--surface); border-left: 3px solid var(--primary); }
+.review-reply-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+
+/* Danh sách gian hàng `/shops`: ô tìm + lưới thẻ tự co giãn (banner mờ, logo tròn đè mép banner). */
+.shops-search { display: flex; gap: 12px; max-width: 520px; margin: 0 auto 28px; }
+.shops-search input { flex: 1; min-width: 0; height: 48px; border: 1px solid var(--line); border-radius: 999px; padding: 0 20px; font-size: 14px; }
+.shops-search input:focus { outline: 0; border-color: var(--dark); }
+.shops-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; margin-bottom: 30px; }
+.shop-card {
+  display: flex; flex-direction: column; border: 1px solid var(--line-3); border-radius: 16px; overflow: hidden; background: var(--white); color: inherit;
+  transition: border-color .25s, box-shadow .25s, transform .25s;
+  &:hover { border-color: var(--primary); box-shadow: var(--shadow-1); transform: translateY(-2px); color: inherit; }
+}
+.shop-card-banner { position: relative; height: 96px; background: var(--surface); }
+.shop-card-body { position: relative; margin-top: -32px; padding: 0 16px 18px; }
+.shop-card-logo { width: 64px; height: 64px; border-radius: 50%; border: 3px solid var(--white); background: var(--white); margin-bottom: 8px; }
+.shop-card-name { margin: 0 0 6px; }
+@media (prefers-reduced-motion: reduce) { .shop-card { transition: none; } .shop-card:hover { transform: none; } }
+
+/* Tìm bằng ảnh: lưới kết quả + từ khoá AI rút ra. */
+.ai-search-keywords { display: flex; flex-wrap: wrap; gap: 8px; }

@@ -5,49 +5,55 @@ import { usePathname } from "next/navigation";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { CategoryResponse, CollectionResponse } from "@/features/catalog/types";
+import { nhomTheoNganhHang } from "@/features/catalog/lib/departments";
+import { chonIconNganhHang } from "@/features/catalog/components/shared/department-icons";
 import { NavCollections } from "@/components/layout/nav-collections";
 
 /*
  * Menu chính — markup `Nav` của Vineta (class giữ nguyên để hover/animation
- * của `_header.scss` chạy), cấu trúc sắp cho MỘT cửa hàng thời trang:
+ * của `_header.scss` chạy), cấu trúc sàn đa ngành hàng:
  *
- *   Trang chủ · Nữ ▾ · Nam ▾ · Bộ sưu tập ▾ (mega) · Giảm giá · Thử đồ AI ▾ · Hỗ trợ ▾
+ *   Trang chủ · Danh mục ▾ (mega) · Bộ sưu tập ▾ (mega) · Giảm giá · AI ▾ · Hỗ trợ ▾
  *
- * Nữ/Nam xổ hai cột (danh mục theo giới + gợi ý nhanh); Bộ sưu tập là mega
- * menu (danh mục + khám phá + slider bộ sưu tập); Thử đồ AI gom hai tính năng
- * FITLY; Hỗ trợ gom trang thông tin. `taoMenu()` dùng chung với menu mobile.
+ * Danh mục xổ mega menu (danh mục cấp 1, không phân biệt giới tính); Bộ sưu tập là mega
+ * menu (khám phá + slider bộ sưu tập); AI gom ba tính năng mới (trợ lý, tìm ảnh, tóm tắt
+ * đánh giá); Hỗ trợ gom trang thông tin. `taoMenu()` dùng chung với menu mobile.
  * Danh mục + bộ sưu tập do layout (shop) nạp từ API (`fetchNavData`) và truyền xuống — không đọc mock ở đây.
  */
 export interface Muc { text: string; href: string; label?: string }
 export interface NhomMenu { heading: string; items: Muc[] }
 
-const theoGioi = (danhMuc: CategoryResponse[], gender: "nu" | "nam"): NhomMenu[] => [
-  { heading: "Danh mục", items: danhMuc.map((c) => ({ text: c.name, href: `${ROUTES.category(c.slug)}&gender=${gender}` })) },
-  {
-    heading: "Gợi ý",
+/*
+ * Menu danh mục và bộ sưu tập phụ thuộc — desktop (`Nav`) và mobile (`MobileMenu`) cùng dùng để không lệch nhau.
+ *
+ * PLAN-0016 (sàn đa ngành hàng): trước đây "Danh mục" dồn cả 7-16 ngành hàng vào MỘT cột dài — vừa trông
+ * như shop thời trang (không thấy "gian hàng" nào khác), vừa lệch bố cục lưới 3 cột của `_header.scss`
+   (`.mega-shop .wrapper-sub-menu { grid-template-columns: repeat(3, 1fr) }` — chỉ 2 nhóm thì cột 3 luôn
+   trống). Giờ NHÓM theo ngành hàng gốc (`parent_id`): ngành có category con → một cột riêng mang tên ngành
+   đó; ngành KHÔNG có con (hiện là 7 ngành thời trang) gom vào cột "Thời trang" — tự thêm cột khi backend có
+   ngành mới, không sửa tay ở đây.
+ */
+export function taoMenu(danhMuc: CategoryResponse[]): { danhMuc: NhomMenu[]; boSuuTap: NhomMenu[] } {
+  const khamPha: NhomMenu = {
+    heading: "Khám phá",
     items: [
-      { text: "Hàng mới về", href: `${ROUTES.products}?gender=${gender}&sort=newest`, label: "Mới" },
-      { text: "Đang giảm giá", href: `${ROUTES.products}?gender=${gender}&sale=1`, label: "Hot" },
-      { text: "Bán chạy nhất", href: `${ROUTES.products}?gender=${gender}&sort=bestselling` },
-      { text: `Tất cả đồ ${gender === "nu" ? "nữ" : "nam"}`, href: `${ROUTES.products}?gender=${gender}` },
+      { text: "Hàng mới về", href: `${ROUTES.products}?sort=newest`, label: "Mới" },
+      { text: "Đang giảm giá", href: `${ROUTES.products}?sale=1`, label: "Hot" },
+      { text: "Bán chạy nhất", href: `${ROUTES.products}?sort=bestselling` },
+      { text: "Tất cả sản phẩm", href: ROUTES.products },
     ],
-  },
-];
+  };
 
-/* Ba nhóm menu phụ thuộc danh mục — desktop (`Nav`) và mobile (`MobileMenu`) cùng dùng để không lệch nhau. */
-export function taoMenu(danhMuc: CategoryResponse[]): { nu: NhomMenu[]; nam: NhomMenu[]; boSuuTap: NhomMenu[] } {
   return {
-    nu: theoGioi(danhMuc, "nu"),
-    nam: theoGioi(danhMuc, "nam"),
+    danhMuc: [
+      ...nhomTheoNganhHang(danhMuc).map((n) => ({ heading: n.heading, items: n.items.map((c) => ({ text: c.name, href: ROUTES.category(c.slug) })) })),
+      khamPha,
+    ],
     boSuuTap: [
-      { heading: "Danh mục", items: danhMuc.map((c) => ({ text: c.name, href: ROUTES.category(c.slug) })) },
-      {
-        heading: "Khám phá",
-        items: [
+      { heading: "Khám phá", items: [
           { text: "Hàng mới về", href: `${ROUTES.products}?sort=newest`, label: "Mới" },
           { text: "Đang giảm giá", href: `${ROUTES.products}?sale=1`, label: "Hot" },
           { text: "Bán chạy nhất", href: `${ROUTES.products}?sort=bestselling` },
-          { text: "Unisex", href: `${ROUTES.products}?gender=unisex` },
           { text: "Tất cả sản phẩm", href: ROUTES.products },
         ],
       },
@@ -55,8 +61,9 @@ export function taoMenu(danhMuc: CategoryResponse[]): { nu: NhomMenu[]; nam: Nho
   };
 }
 export const MENU_AI: Muc[] = [
-  { text: "Gợi ý phối đồ AI", href: ROUTES.aiSuggest, label: "AI" },
-  { text: "Thử đồ 2D", href: ROUTES.virtualTryOn, label: "Mới" },
+  { text: "Trợ lý mua sắm AI", href: ROUTES.aiAssistant, label: "AI" },
+  { text: "Tìm kiếm bằng hình ảnh", href: ROUTES.aiImageSearch, label: "Mới" },
+  { text: "Tóm tắt đánh giá AI", href: ROUTES.aiReviewSummary },
 ];
 export const MENU_HO_TRO: Muc[] = [
   { text: "Giới thiệu", href: ROUTES.about },
@@ -110,13 +117,25 @@ export function Nav({ danhMuc, boSuuTap }: NavData) {
       <li className="menu-item">
         <Link href={ROUTES.home} className={cn("item-link", pathname === "/" && "menuActive")}>Trang chủ</Link>
       </li>
-      <li className="menu-item position-relative">
-        <Link href={`${ROUTES.products}?gender=nu`} className="item-link">Nữ <i className="icon icon-arr-down" /></Link>
-        <XoCot nhom={menu.nu} active={active} />
-      </li>
-      <li className="menu-item position-relative">
-        <Link href={`${ROUTES.products}?gender=nam`} className="item-link">Nam <i className="icon icon-arr-down" /></Link>
-        <XoCot nhom={menu.nam} active={active} />
+      <li className="menu-item">
+        <a href="#" onClick={chan} className={cn("item-link", pathname.startsWith(ROUTES.products) && "menuActive")}>Danh mục <i className="icon icon-arr-down" /></a>
+        <div className="sub-menu mega-menu mega-shop">
+          <div className="wrapper-sub-menu">
+            {menu.danhMuc.map((n) => {
+              const Icon = n.heading === "Khám phá" ? null : chonIconNganhHang(n.heading);
+              return (
+                <div className="mega-menu-item" key={n.heading}>
+                  <div className="menu-heading menu-heading-nganh">
+                    {Icon && <span className="menu-heading-icon"><Icon /></span>}
+                    {n.heading}
+                  </div>
+                  <DanhSach items={n.items} active={active} />
+                </div>
+              );
+            })}
+          </div>
+          <NavCollections boSuuTap={boSuuTap.slice(0, 2)} />
+        </div>
       </li>
       <li className="menu-item">
         <a href="#" onClick={chan} className={cn("item-link", pathname.startsWith(ROUTES.products) && "menuActive")}>Bộ sưu tập <i className="icon icon-arr-down" /></a>
@@ -135,8 +154,11 @@ export function Nav({ danhMuc, boSuuTap }: NavData) {
       <li className="menu-item">
         <Link href={`${ROUTES.products}?sale=1`} className="item-link">Giảm giá</Link>
       </li>
+      <li className="menu-item">
+        <Link href={ROUTES.shops} className={cn("item-link", (pathname.startsWith(ROUTES.shops) || pathname.startsWith(ROUTES.shop(""))) && "menuActive")}>Gian hàng</Link>
+      </li>
       <li className="menu-item position-relative">
-        <a href="#" onClick={chan} className={cn("item-link", MENU_AI.some((m) => active(m.href)) && "menuActive")}>Thử đồ AI <i className="icon icon-arr-down" /></a>
+        <a href="#" onClick={chan} className={cn("item-link", MENU_AI.some((m) => active(m.href)) && "menuActive")}>AI <i className="icon icon-arr-down" /></a>
         <XoCot nhom={[{ heading: "", items: MENU_AI }]} active={active} gon />
       </li>
       <li className="menu-item position-relative">

@@ -29,7 +29,7 @@ export function Shopgram({ products }: { products: ProductCardResponse[] }) {
           {products.slice(0, 5).map((p, i) => (
             <SwiperSlide key={p.id} className="swiper-slide">
               <div className="gallery-item hover-img hover-overlay wow fadeInUp" data-wow-delay={`${i * 0.1}s`}>
-                <div className="image img-style"><Image src={p.image_url} alt={p.name} width={420} height={420} /></div>
+                <div className="image img-style"><Image src={p.image_url} alt={p.name} width={420} height={420} sizes="(min-width: 1200px) 20vw, (min-width: 768px) 33vw, 50vw" /></div>
                 <Link href={ROUTES.product(p.slug)} className="box-icon hover-tooltip">
                   <span className="icon icon-cart2" />
                   <span className="tooltip">Xem sản phẩm</span>

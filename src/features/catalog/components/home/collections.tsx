@@ -28,7 +28,7 @@ export function Collections({ collections }: { collections: CollectionResponse[]
           <SwiperSlide key={c.slug} className="swiper-slide">
             <div className="fs-cls lg hover-img">
               <div className="img-style image">
-                <Image src={c.image_url} alt={c.name} width={960} height={1230} />
+                <Image src={c.image_url} alt={c.name} width={960} height={1230} sizes="(min-width: 1200px) 33vw, (min-width: 576px) 50vw, 100vw" />
               </div>
               <div className="content wow fadeInUp">
                 <Link href={ROUTES.collection(c.slug)} className="tf-btn font-2 btn-white hover-icon-2 hover-dark">

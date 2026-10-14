@@ -21,11 +21,11 @@ export function Banner({ products }: { products: ProductCardResponse[] }) {
         <div className="content-banner">
           <div className="image-wrap hover-img">
             <Link href={`${ROUTES.products}?gender=nu`} className="image img-style d-block">
-              <Image alt="Bộ sưu tập nữ" src="/images/banner/01.jpg" width={768} height={1008} />
+              <Image alt="Bộ sưu tập nữ" src="/images/banner/01.jpg" width={768} height={1008} sizes="(min-width: 992px) 50vw, 100vw" />
             </Link>
             {products.slice(0, 2).map((p) => (
               <div key={p.id} className="loobook-product style-row">
-                <div className="img-style"><Image alt={p.name} src={p.image_url} width={144} height={170} className="img-fluid" /></div>
+                <div className="img-style"><Image alt={p.name} src={p.image_url} width={144} height={170} sizes="72px" className="img-fluid" /></div>
                 <div className="content">
                   <div className="info">
                     <Link href={ROUTES.product(p.slug)} className="text-md fw-medium text-truncate d-block link text-decoration-none" style={{ maxWidth: 200 }}>{p.name}</Link>

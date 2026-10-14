@@ -15,10 +15,13 @@ import { ROUTES } from "@/lib/constants";
  */
 export interface HeroSlide { imageUrl: string; eyebrow: string; title: string; subtitle: string; ctaLabel: string; ctaHref: string; bgType: string }
 
+/* Slide "Khám phá mọi ngành hàng" đặt ĐẦU TIÊN (không autoplay-chờ) — ấn tượng đầu tiên phải là sàn đa
+   ngành hàng, không phải riêng thời trang (PLAN-0016, phản hồi người dùng: trang chủ "nhìn như 1 shop
+   thời trang"). */
 export const HERO_SLIDES: HeroSlide[] = [
+  { imageUrl: "/images/hero/02.jpg", bgType: "bg-type-2", eyebrow: "Ưu đãi hôm nay", title: "Khám phá mọi ngành hàng", subtitle: "Thời trang, điện tử, gia dụng, mỹ phẩm và nhiều hơn nữa. Mua sắm mọi thứ bạn cần.", ctaLabel: "Xem ngay", ctaHref: ROUTES.products },
+  { imageUrl: "/images/hero/03.jpg", bgType: "bg-type-3", eyebrow: "Hàng bán chạy", title: "Những sản phẩm yêu thích", subtitle: "Các sản phẩm được khách hàng yêu thích nhất trong những tuần gần đây.", ctaLabel: "Xem bán chạy", ctaHref: `${ROUTES.products}?sort=bestselling` },
   { imageUrl: "/images/hero/01.jpg", bgType: "bg-type-1", eyebrow: "Bộ sưu tập mới", title: "Nhẹ nhàng cho mùa này", subtitle: "Những thiết kế tối giản, thoải mái, dễ phối cho mọi ngày trong tuần.", ctaLabel: "Khám phá ngay", ctaHref: `${ROUTES.products}?sort=newest` },
-  { imageUrl: "/images/hero/02.jpg", bgType: "bg-type-2", eyebrow: "Thời trang nữ", title: "Tự tin là chính mình", subtitle: "Đầm, váy, áo sơ mi — từ đi làm tới dạo phố, một tủ đồ là đủ.", ctaLabel: "Xem đồ nữ", ctaHref: `${ROUTES.products}?gender=nu` },
-  { imageUrl: "/images/hero/03.jpg", bgType: "bg-type-3", eyebrow: "Thời trang nam", title: "Đơn giản mà chỉn chu", subtitle: "Áo thun, sơ mi, jean — những món cơ bản làm nên phong cách.", ctaLabel: "Xem đồ nam", ctaHref: `${ROUTES.products}?gender=nam` },
 ];
 
 export function Hero({ slides = HERO_SLIDES }: { slides?: HeroSlide[] }) {

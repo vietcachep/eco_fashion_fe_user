@@ -12,6 +12,7 @@ import type { ProductCardResponse } from "@/features/catalog/types";
 import type { AiAnalysisResult } from "@/features/catalog/mock/ai-mock";
 import { analyzeStyle } from "@/features/catalog/api/ai-api";
 import { apiErrorMessage } from "@/lib/api-error";
+import { ANH_AI_ACCEPT, ANH_AI_TOI_DA_MB, LoiAnhAi, chuanBiAnhAi, laAnhAiHopLe } from "@/features/catalog/lib/image-upload";
 
 /*
  * AI gợi ý sản phẩm (FITLY 4.3): tải ảnh -> hiệu ứng phân tích -> kết quả
@@ -33,17 +34,22 @@ export function AiSuggestScreen() {
   const [loi, setLoi] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const chonAnh = (f: File) => { if (f.type.startsWith("image/")) { setFile(f); setPreview(URL.createObjectURL(f)); } };
+  const chonAnh = (f: File) => {
+    if (!laAnhAiHopLe(f)) { setLoi("Chỉ nhận ảnh JPG, PNG hoặc WebP."); return; }
+    setLoi(null); setFile(f); setPreview(URL.createObjectURL(f));
+  };
   /* Có backend: ảnh lên `POST /ai/style-analysis` (vision) — các bước chỉ là hoạt cảnh chờ; chế độ mẫu: kết quả mẫu. */
   const phanTich = async () => {
     if (!preview || !file) return;
     setStep("analyzing"); setLoi(null);
     const hoatCanh = (async () => { for (let i = 0; i < BUOC.length; i++) { setBuoc(i); await new Promise((r) => setTimeout(r, 550)); } })();
     try {
-      const [r] = await Promise.all([analyzeStyle(file), hoatCanh]);
+      /* Ảnh chụp điện thoại thường > 5MB (BE từ chối 413) — thu nhỏ ở trình duyệt trước khi gửi. */
+      const anh = await chuanBiAnhAi(file);
+      const [r] = await Promise.all([analyzeStyle(anh), hoatCanh]);
       setKetQua(r.analysis); setProducts(r.products); setStep("result");
     } catch (err) {
-      setLoi(apiErrorMessage(err, "Chưa phân tích được ảnh, bạn thử lại nhé.")); setStep("upload");
+      setLoi(err instanceof LoiAnhAi ? err.message : apiErrorMessage(err, "Chưa phân tích được ảnh, bạn thử lại nhé.")); setStep("upload");
     }
   };
   const lamLai = () => { setStep("upload"); setPreview(null); setFile(null); setBuoc(0); setProducts([]); setKetQua(null); };
@@ -66,12 +72,12 @@ export function AiSuggestScreen() {
                     <span className="box-icon"><IconUpload /></span>
                     <div>
                       <p className="text-md fw-medium text-dark">Kéo ảnh vào đây hoặc bấm để chọn</p>
-                      <p className="text-sm text-main mt_4">PNG, JPG, WEBP — tối đa 10MB. Ảnh toàn thân cho kết quả tốt nhất.</p>
+                      <p className="text-sm text-main mt_4">PNG, JPG, WEBP — ảnh lớn hơn {ANH_AI_TOI_DA_MB}MB sẽ tự được thu nhỏ. Ảnh toàn thân cho kết quả tốt nhất.</p>
                     </div>
                   </>
                 )}
               </div>
-              <input ref={fileRef} type="file" accept="image/*" className="d-none" onChange={(e) => { const f = e.target.files?.[0]; if (f) chonAnh(f); }} />
+              <input ref={fileRef} type="file" accept={ANH_AI_ACCEPT} className="d-none" onChange={(e) => { const f = e.target.files?.[0]; if (f) chonAnh(f); }} />
               {loi && <p className="text-sm text-danger mt_12">{loi}</p>}
               <button type="button" className="tf-btn btn-dark2 animate-btn w-100 justify-content-center mt_20" disabled={!preview} onClick={phanTich}>
                 Phân tích bằng AI <i className="icon icon-arrow-right" />
@@ -118,9 +124,13 @@ export function AiSuggestScreen() {
             </div>
             <div className="col-lg-8">
               <div className="flat-title text-start mb_20"><h5 className="title">Sản phẩm gợi ý cho bạn</h5></div>
-              <div className="tf-grid-layout tf-col-2 md-col-3">
-                {products.map((p) => <ProductCard key={p.id} product={p} tooltipDirection="top" />)}
-              </div>
+              {products.length === 0 ? (
+                <p className="text-md text-main mb_20">Chưa có sản phẩm khớp với gợi ý này — bạn xem thêm toàn bộ sản phẩm bên dưới nhé.</p>
+              ) : (
+                <div className="tf-grid-layout tf-col-2 md-col-3">
+                  {products.map((p) => <ProductCard key={p.id} product={p} tooltipDirection="top" source="style" />)}
+                </div>
+              )}
               <Link href={ROUTES.products} className="tf-btn btn-line-dark mt_30">Xem tất cả sản phẩm <i className="icon icon-arrow-right" /></Link>
             </div>
           </div>

@@ -21,6 +21,8 @@ export function useAddToCart() {
       variantId: v.id, productId: p.id, slug: p.slug, name: p.name,
       imageUrl: imageUrl ?? p.image_url, color: v.color, size: v.size,
       unitPrice: Number(v.price.amount), maxQuantity: Math.max(1, Math.min(v.stock, 10)),
+      /* Suy shop từ sản phẩm lúc thêm giỏ (PLAN-0008) — cart-screen nhóm dòng theo đây. */
+      shopSlug: p.shop?.slug, shopName: p.shop?.name,
     }, quantity);
     /* Tín hiệu cho BE đo dải gợi ý (PLAN-0007): nguồn = dải mà khách bấm vào trước đó, nếu có. */
     ghiSuKien([{ productId: p.id, eventType: "add_to_cart", source: layNguon(p.id) }]);

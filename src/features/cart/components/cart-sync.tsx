@@ -24,13 +24,17 @@ export function CartSync() {
     if (CHE_DO_MOCK || !bootstrapped) return;
     const store = useCartStore.getState();
     if (!userId) {
-      if (store.remote) { store.setRemote(null); useCartStore.setState({ lines: [], serverSubtotal: null }); }
+      if (store.remote) { store.setRemote(null); useCartStore.setState({ lines: [], serverSubtotal: null, freeShippingThreshold: null, ghiChu: "" }); }
       return;
     }
     let huy = false;
-    const onError = (err: unknown) => {
+    /* Báo lỗi rồi nạp lại giỏ server; store ĐỢI hàm này xong mới chạy thao tác xếp sau (tránh nạp đè lên giỏ đang đổi). */
+    const onError = async (err: unknown) => {
       toast.error(apiErrorMessage(err, "Không cập nhật được giỏ hàng"));
-      cartApi.get().then((s) => { if (!huy) useCartStore.getState().napTuServer(s); }).catch(() => undefined);
+      try {
+        const s = await cartApi.get();
+        if (!huy) useCartStore.getState().napTuServer(s);
+      } catch { /* mạng đứt: giữ nguyên, lần mở giỏ sau tự nạp */ }
     };
     /*
      * Dòng local có thể là (a) khách thêm khi chưa đăng nhập, hoặc (b) bản sao giỏ server còn trong localStorage
@@ -53,7 +57,8 @@ export function CartSync() {
           add: (line, quantity) => cartApi.add(line.variantId, quantity),
           update: cartApi.update,
           remove: cartApi.remove,
-          clear: cartApi.clear,
+          select: cartApi.select,
+          refresh: cartApi.get,
           onError,
         });
       })

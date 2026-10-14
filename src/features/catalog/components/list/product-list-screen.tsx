@@ -1,10 +1,11 @@
 import { Suspense } from "react";
 import { ROUTES } from "@/lib/constants";
 import { PageTitle } from "@/components/shared/page-title";
-import type { CategoryResponse, ColorOption, ProductCardResponse, ProductPage, ProductQuery } from "@/features/catalog/types";
-import { ProductSidebar } from "@/features/catalog/components/list/product-sidebar";
+import type { CategoryResponse, ProductCardResponse, ProductPage, ProductQuery } from "@/features/catalog/types";
+import { ProductSidebar, type SidebarFacets } from "@/features/catalog/components/list/product-sidebar";
 import { ProductListBody } from "@/features/catalog/components/list/product-list-body";
 import { FilterModal } from "@/features/catalog/components/list/filter-modal";
+import { ProductGridSkeleton } from "@/features/catalog/components/shared/skeletons";
 
 /*
  * Màn danh sách — trang `shop-left-sidebar` của Vineta: `tf-page-title`,
@@ -17,19 +18,18 @@ const MO_TA: Record<string, string> = {
   nam: "Những món cơ bản làm nên phong cách nam: áo thun, sơ mi, jean — đơn giản mà chỉn chu.",
 };
 
-export function ProductListScreen({ query, page, category, categories, colors, sizes, saleProducts }: {
+export function ProductListScreen({ query, page, category, categories, facets, saleProducts }: {
   query: ProductQuery;
   page: ProductPage;
   category: CategoryResponse | null;
   categories: CategoryResponse[];
-  colors: ColorOption[];
-  sizes: string[];
+  facets: SidebarFacets;
   saleProducts: ProductCardResponse[];
 }) {
   const title = category?.name ?? (query.q ? "Kết quả tìm kiếm" : query.sale ? "Đang giảm giá" : query.gender === "nu" ? "Thời trang nữ" : query.gender === "nam" ? "Thời trang nam" : "Tất cả sản phẩm");
   const desc = query.gender ? MO_TA[query.gender] : undefined;
   const crumbs = category ? [{ label: "Sản phẩm", href: ROUTES.products }, { label: category.name }] : [{ label: title }];
-  const sidebarProps = { categories, colors, sizes, saleProducts };
+  const sidebarProps = { categories, category, facets, saleProducts };
 
   return (
     <>
@@ -47,7 +47,7 @@ export function ProductListScreen({ query, page, category, categories, colors, s
               </div>
             </div>
             <div className="col-xl-9">
-              <Suspense><ProductListBody page={page} categories={categories} /></Suspense>
+              <Suspense fallback={<ProductGridSkeleton />}><ProductListBody page={page} categories={categories} /></Suspense>
             </div>
           </div>
         </div>
@@ -55,8 +55,8 @@ export function ProductListScreen({ query, page, category, categories, colors, s
       <div className="flat-spacing pt-0">
         <div className="container">
           <p className="text text-md text-center">
-            Mỗi thiết kế của Vineta được chọn chất liệu kỹ, thử trên nhiều vóc dáng người Việt trước khi lên kệ.
-            Từ áo thun, sơ mi cơ bản tới đầm, váy, áo khoác — những món nền tảng để bạn phối được cả tuần.
+            Mỗi sản phẩm đều được kiểm tra chất lượng kỹ trước khi lên kệ.
+            Từ thời trang, điện thoại & phụ kiện, đồ gia dụng đến sắc đẹp & sức khoẻ — mua sắm mọi thứ bạn cần tại một nơi.
           </p>
         </div>
       </div>

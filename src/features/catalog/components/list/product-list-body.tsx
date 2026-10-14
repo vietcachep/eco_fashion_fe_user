@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PRODUCT_SORTS, ROUTES, type ProductSort } from "@/lib/constants";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { PRODUCT_SORTS, type ProductSort } from "@/lib/constants";
 import { formatVND } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { ProductCard } from "@/components/shared/product-card";
@@ -20,6 +22,7 @@ import { useProductQuery } from "@/features/catalog/hooks/use-product-query";
  */
 export function ProductListBody({ page, categories }: { page: ProductPage; categories: CategoryResponse[] }) {
   const { query, set, clear, soDangLoc } = useProductQuery();
+  const pathname = usePathname();
   const [layout, setLayout] = useState(3);
 
   useEffect(() => {
@@ -32,6 +35,8 @@ export function ProductListBody({ page, categories }: { page: ProductPage; categ
     return () => window.removeEventListener("resize", fit);
   }, []);
 
+  const danhMucDangXem = query.category ? categories.find((c) => c.slug === query.category) : undefined;
+  const nhomCon = danhMucDangXem ? categories.filter((c) => c.parent_id === danhMucDangXem.id) : [];
   const sortLabel = PRODUCT_SORTS.find((s) => s.value === (query.sort ?? "featured"))?.label ?? "Nổi bật";
   const tags: { key: keyof typeof query; label: string }[] = [];
   if (query.category) tags.push({ key: "category", label: `Danh mục: ${categories.find((c) => c.slug === query.category)?.name ?? query.category}` });
@@ -42,7 +47,9 @@ export function ProductListBody({ page, categories }: { page: ProductPage; categ
   if (query.maxPrice) tags.push({ key: "maxPrice", label: `Đến ${formatVND(query.maxPrice)}` });
   if (query.sale) tags.push({ key: "sale", label: "Đang giảm giá" });
 
-  const hrefFor = (n: number) => `${ROUTES.products}${toSearchString({ ...query, page: n })}`;
+  /* Trang thuộc pathname HIỆN TẠI (không ép cứng `/products`) — component này được tái dùng nguyên cho
+     `/shop/[slug]` (PLAN-0008), ép cứng sẽ đưa khách ra khỏi trang gian hàng khi bấm số trang. */
+  const hrefFor = (n: number) => `${pathname}${toSearchString({ ...query, page: n })}`;
 
   return (
     <>
@@ -95,7 +102,22 @@ export function ProductListBody({ page, categories }: { page: ProductPage; categ
           </div>
         )}
 
-        {page.items.length === 0 ? (
+        {page.items.length === 0 && nhomCon.length > 0 ? (
+          /* Ngành gốc có danh mục con (vd "Điện thoại & Phụ kiện"): sản phẩm nằm ở các ngành con nên `?category=<gốc>`
+             luôn rỗng — dẫn khách xuống ngành con thay vì báo "không có sản phẩm". */
+          <div className="py-4">
+            <p className="text-xl fw-medium mb_8 text-center">{danhMucDangXem?.name}</p>
+            <p className="text-md text-main mb_20 text-center">Chọn một nhóm sản phẩm để xem.</p>
+            <div className="departments-grid">
+              {nhomCon.map((c) => (
+                <Link key={c.slug} href={`${pathname}${toSearchString({ ...query, category: c.slug, page: undefined })}`} className="department-tile">
+                  <span className="department-tile-name">{c.name}</span>
+                  <span className="department-tile-sub">{c.product_count} sản phẩm</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        ) : page.items.length === 0 ? (
           <div className="text-center py-5">
             <p className="text-xl fw-medium mb_8">Không có sản phẩm phù hợp</p>
             <p className="text-md text-main mb_20">Thử bỏ bớt bộ lọc hoặc tìm với từ khoá khác.</p>

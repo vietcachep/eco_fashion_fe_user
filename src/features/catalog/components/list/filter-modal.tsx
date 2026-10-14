@@ -1,14 +1,14 @@
 "use client";
 
 import { hideOffcanvas } from "@/lib/bootstrap";
-import type { CategoryResponse, ColorOption, ProductCardResponse } from "@/features/catalog/types";
-import { ProductSidebar } from "@/features/catalog/components/list/product-sidebar";
+import type { CategoryResponse, ProductCardResponse } from "@/features/catalog/types";
+import { ProductSidebar, type SidebarFacets } from "@/features/catalog/components/list/product-sidebar";
 
 /*
  * Bộ lọc trên mobile — offcanvas trái `#filterShop` của Vineta (`FilterModal`),
  * ruột là cùng `ProductSidebar` với desktop; chọn xong tự đóng.
  */
-export function FilterModal(props: { categories: CategoryResponse[]; colors: ColorOption[]; sizes: string[]; saleProducts: ProductCardResponse[] }) {
+export function FilterModal(props: { categories: CategoryResponse[]; category?: CategoryResponse | null; facets: SidebarFacets; saleProducts: ProductCardResponse[] }) {
   return (
     <div className="offcanvas offcanvas-start canvas-sidebar canvas-filter" id="filterShop">
       <div className="canvas-wrapper">

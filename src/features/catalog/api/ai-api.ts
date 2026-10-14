@@ -2,10 +2,10 @@ import { api } from "@/lib/api";
 import { API_PREFIX, CHE_DO_MOCK } from "@/lib/api-mode";
 import { bocData } from "@/lib/api/envelope";
 import type { ApiResponse } from "@/types/common";
-import type { ProductCardResponse as BeCard } from "@/lib/api/generated/model";
+import type { ImageSearchResponse as BeImageSearch, ProductCardResponse as BeCard } from "@/lib/api/generated/model";
 import { chuanHoaCard } from "@/features/catalog/api/catalog-adapter";
+import { bosungShop } from "@/features/catalog/api/catalog-api";
 import { AI_ANALYSIS_MOCK, fetchAiSuggestedProducts, traLoiChatMock, VIRTUAL_TRY_ON_MOCK, type AiAnalysisResult } from "@/features/catalog/mock/ai-mock";
-import { SAN_PHAM } from "@/features/catalog/mock/products";
 import type { ProductCardResponse } from "@/features/catalog/types";
 
 /*
@@ -59,7 +59,7 @@ export async function analyzeStyle(file: File, gender?: "nam" | "nu" | null): Pr
   if (gender) fd.append("gender", gender);
   const d = bocData(await api.post<ApiResponse<BeStyle>>(`${API_PREFIX}/ai/style-analysis`, fd, { headers: { ...headers(), "Content-Type": "multipart/form-data" }, timeout: 90_000 }), "ai.style");
   luuGuestKey(d.guestKey);
-  return { analysis: { dang_nguoi: d.analysis.dangNguoi, mau_phu_hop: d.analysis.mauPhuHop, phong_cach: d.analysis.phongCach, tu_van: d.analysis.tuVan }, products: d.products.map(chuanHoaCard), source: d.source };
+  return { analysis: { dang_nguoi: d.analysis.dangNguoi, mau_phu_hop: d.analysis.mauPhuHop, phong_cach: d.analysis.phongCach, tu_van: d.analysis.tuVan }, products: await bosungShop(d.products.map(chuanHoaCard)), source: d.source };
 }
 
 export interface TryOnView { jobId: string | null; status: "queued" | "processing" | "done" | "failed" | "mock"; resultUrl: string | null; error: string | null; note: string }
@@ -86,6 +86,26 @@ export async function waitTryOn(jobId: string, onTick?: (status: string) => void
     await new Promise((r) => setTimeout(r, d.pollAfterMs ?? 3000));
   }
   return { jobId, status: "failed", resultUrl: null, error: "Quá thời gian chờ, thử lại sau nhé.", note: "" };
+}
+
+/*
+ * Tìm sản phẩm bằng ảnh — `POST /ai/image-search` (multipart `image` ≤ 5MB JPEG/PNG/WebP; cho cả khách vãng lai, 10 lần/giờ).
+ * `available: false` khi BE chưa có khoá OpenAI → màn hình báo "chưa khả dụng", KHÔNG coi là lỗi. Không khớp / vision
+ * lỗi: `products: []` + `message` giải thích (BE không ném lỗi). Chế độ mẫu không có tìm bằng ảnh.
+ */
+export interface ImageSearchView { available: boolean; description: string | null; keywords: string[]; message: string | null; products: ProductCardResponse[] }
+
+export async function searchByImage(file: File): Promise<ImageSearchView> {
+  if (CHE_DO_MOCK) return { available: false, description: null, keywords: [], message: "Tìm bằng ảnh cần máy chủ AI nên chưa có ở chế độ dữ liệu mẫu.", products: [] };
+  const fd = new FormData();
+  fd.append("image", file);
+  const d = bocData(await api.post<ApiResponse<BeImageSearch>>(`${API_PREFIX}/ai/image-search`, fd, { headers: { ...headers(), "Content-Type": "multipart/form-data" }, timeout: 60_000 }), "ai.image-search");
+  const chuoi = (v: unknown) => (typeof v === "string" && v.trim() ? v : null);
+  return {
+    available: Boolean(d.available), description: chuoi(d.description), keywords: d.keywords ?? [], message: chuoi(d.message),
+    /* Swagger không khai hình dạng phần tử `items` (cùng dạng ProductCardResponse) — ép kiểu đúng một chỗ này. */
+    products: await bosungShop(((d.items ?? []) as unknown as BeCard[]).map(chuanHoaCard)),
+  };
 }
 
 // ------------------------------------------------------------ tín hiệu hành vi (fire-and-forget)
@@ -121,19 +141,8 @@ interface BeRecommendation { source: string; items: BeCard[]; generatedAt: strin
 
 const dai = async (path: string, params?: Record<string, unknown>): Promise<ProductCardResponse[]> => {
   const d = bocData(await api.get<ApiResponse<BeRecommendation>>(`${API_PREFIX}${path}`, { params, headers: headers() }), path);
-  return (d.items ?? []).map(chuanHoaCard);
+  return bosungShop((d.items ?? []).map(chuanHoaCard));
 };
-
-/* Chế độ mẫu: cùng ngành, loại chính nó. */
-const mockCungNganh = (slug: string, limit: number) => {
-  const p = SAN_PHAM.find((x) => x.slug === slug);
-  return p ? SAN_PHAM.filter((x) => x.category_slug === p.category_slug && x.id !== p.id).slice(0, limit) : [];
-};
-
-export async function getSimilarProducts(slug: string, limit = 8): Promise<ProductCardResponse[]> {
-  if (CHE_DO_MOCK) return mockCungNganh(slug, limit);
-  return dai(`/ai/products/${encodeURIComponent(slug)}/similar`, { limit });
-}
 
 export async function getBoughtTogether(slug: string, limit = 6): Promise<ProductCardResponse[]> {
   if (CHE_DO_MOCK) return [];
@@ -150,21 +159,13 @@ export async function getCartSuggestions(limit = 6): Promise<ProductCardResponse
 export async function getForYou(limit = 8): Promise<ProductCardResponse[]> {
   if (CHE_DO_MOCK) return [];
   const d = bocData(await api.get<ApiResponse<BeCard[]>>(`${API_PREFIX}/ai/recommendations`, { params: { limit }, headers: headers() }), "ai.for-you");
-  return (d ?? []).map(chuanHoaCard);
+  return bosungShop((d ?? []).map(chuanHoaCard));
 }
 
 // ------------------------------------------------------------ bộ sưu tập theo dịp · so sánh · FAQ · tóm tắt
 
 export interface AiCollectionView { title: string; subtitle: string; query: string; products: ProductCardResponse[] }
 export interface AiCollectionsView { day: string; generatedByAi: boolean; collections: AiCollectionView[] }
-
-interface BeCollections { day: string; generatedByAi: boolean; collections: Array<{ title: string; subtitle: string; query: string; items: BeCard[] }> }
-
-export async function getAiCollections(): Promise<AiCollectionsView | null> {
-  if (CHE_DO_MOCK) return null;
-  const d = bocData(await api.get<ApiResponse<BeCollections>>(`${API_PREFIX}/ai/collections`), "ai.collections");
-  return { day: d.day, generatedByAi: d.generatedByAi, collections: (d.collections ?? []).map((c) => ({ title: c.title, subtitle: c.subtitle, query: c.query, products: (c.items ?? []).map(chuanHoaCard) })) };
-}
 
 export interface AiCompareView { criteria: Array<{ name: string; values: string[] }>; verdicts: Array<{ slug: string; bestFor: string }>; summary: string; generatedByAi: boolean }
 
@@ -201,12 +202,7 @@ export async function requestHumanSupport(input: { sessionId: string | null; sum
   return d.supportRequestId;
 }
 
-export interface AiStatus { chat: boolean; chatLlm: boolean; chatActions: boolean; styleAnalysis: boolean; styleAnalysisLlm: boolean; tryOn: boolean; compare: boolean; collections: boolean; productFaq: boolean }
+export interface AiStatus { chat: boolean; chatLlm: boolean; chatActions: boolean; styleAnalysis: boolean; styleAnalysisLlm: boolean; tryOn: boolean; imageSearch: boolean; compare: boolean; collections: boolean; productFaq: boolean }
 
 /* Chế độ mẫu: các tính năng có mock thì bật, thứ cần LLM thật thì tắt. */
-export const AI_STATUS_MOCK: AiStatus = { chat: true, chatLlm: false, chatActions: false, styleAnalysis: true, styleAnalysisLlm: false, tryOn: true, compare: false, collections: false, productFaq: false };
-
-export async function getAiStatus(): Promise<AiStatus> {
-  if (CHE_DO_MOCK) return AI_STATUS_MOCK;
-  return bocData(await api.get<ApiResponse<AiStatus>>(`${API_PREFIX}/ai/status`), "ai.status");
-}
+export const AI_STATUS_MOCK: AiStatus = { chat: true, chatLlm: false, chatActions: false, styleAnalysis: true, styleAnalysisLlm: false, tryOn: true, imageSearch: false, compare: false, collections: false, productFaq: false };

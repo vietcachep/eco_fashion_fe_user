@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { APP_NAME, ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -12,6 +13,7 @@ import { apiErrorMessage } from "@/lib/api-error";
 import { chatWithAssistant, confirmChatAction, requestHumanSupport } from "@/features/catalog/api/ai-api";
 import { useAiStatus } from "@/features/catalog/hooks/use-ai";
 import { useAuthStore } from "@/stores/auth-store";
+import { useChatbotStore } from "@/features/catalog/stores/chatbot-store";
 import { useReloadCart } from "@/features/cart/hooks/use-reload-cart";
 import { useQueryClient } from "@tanstack/react-query";
 import { IconChat, IconClose, IconSend } from "@/components/shared/icons";
@@ -27,12 +29,18 @@ import { ChatText } from "@/features/catalog/components/chatbot/chat-text";
  */
 interface Message { id: number; role: "user" | "bot"; text: string; products?: ProductCardResponse[]; suggestions?: string[]; actions?: Array<{ id: string; kind: string; summary: string; done?: string }>; needHuman?: boolean; hoiCuoi?: string; emailDaGui?: string }
 
-const GOI_Y = ["Áo thun nữ", "Quần jean nam", "Đầm mùa hè", "Đồ công sở", "Dưới 200k", "Hàng mới về"];
+/* PLAN-0016 — gợi ý trải đều nhiều ngành hàng (không chỉ thời trang) để đúng với sàn đa ngành hàng. */
+const GOI_Y = ["Áo thun nữ", "Điện thoại giá tốt", "Đồ gia dụng", "Mỹ phẩm hot", "Dưới 200k", "Hàng mới về"];
 let dem = 1;
 
 export function FashionChatbot() {
-  const [mo, setMo] = useState(false);
-  const [tin, setTin] = useState<Message[]>([{ id: 0, role: "bot", text: `Xin chào! Mình là trợ lý thời trang ${APP_NAME}.\nBạn đang tìm gì hôm nay? Cho mình biết phong cách, màu, dịp mặc hoặc ngân sách nhé.` }]);
+  const mo = useChatbotStore((s) => s.mo);
+  const setMo = useChatbotStore((s) => s.setMo);
+  /* Đang ở trang chi tiết sản phẩm thì báo slug cho BE: "cái này" trong câu hỏi = sản phẩm đó. */
+  const pathname = usePathname();
+  const tienTo = `${ROUTES.products}/`;
+  const contextSlug = pathname.startsWith(tienTo) ? pathname.slice(tienTo.length).split("/")[0] || null : null;
+  const [tin, setTin] = useState<Message[]>([{ id: 0, role: "bot", text: `Xin chào! Mình là trợ lý mua sắm ${APP_NAME}.\nBạn đang tìm gì hôm nay? Cho mình biết sản phẩm, ngành hàng hoặc ngân sách nhé.` }]);
   const [nhap, setNhap] = useState("");
   const [dangGui, setDangGui] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -54,7 +62,7 @@ export function FashionChatbot() {
     setDangGui(true);
     try {
       if (CHE_DO_MOCK) await new Promise((r) => setTimeout(r, 900 + Math.random() * 600));
-      const reply = await chatWithAssistant(sessionId, t);
+      const reply = await chatWithAssistant(sessionId, t, contextSlug);
       if (reply.sessionId) setSessionId(reply.sessionId);
       setTin((prev) => [...prev, { id: ++dem, role: "bot", text: reply.text, products: reply.products, suggestions: reply.suggestions, actions: reply.actions, needHuman: reply.needHuman, hoiCuoi: t }]);
     } catch (err) {
@@ -96,10 +104,10 @@ export function FashionChatbot() {
   if (!aiBat) return null;
   return (
     <>
-      <button type="button" className={cn("chatbot-toggle", mo && "open")} onClick={() => setMo((v) => !v)} aria-label={mo ? "Đóng trợ lý" : "Mở trợ lý thời trang"} aria-expanded={mo}>
+      <button type="button" className={cn("chatbot-toggle", mo && "open")} onClick={() => setMo(!mo)} aria-label={mo ? "Đóng trợ lý" : "Mở trợ lý mua sắm"} aria-expanded={mo}>
         {mo ? <IconClose /> : <IconChat />}
       </button>
-      <div className={cn("chatbot-panel", mo && "open")} role="dialog" aria-label="Trợ lý thời trang">
+      <div className={cn("chatbot-panel", mo && "open")} role="dialog" aria-label="Trợ lý mua sắm">
         <div className="chatbot-head">
           <span className="avatar"><IconChat /></span>
           <div>
@@ -116,7 +124,7 @@ export function FashionChatbot() {
                 <div className="chat-products">
                   {m.products.map((p) => (
                     <Link key={p.id} href={ROUTES.product(p.slug)} onClick={() => setMo(false)}>
-                      <Image src={p.image_url} alt={p.name} width={44} height={56} />
+                      <Image src={p.image_url} alt={p.name} width={44} height={56} sizes="44px" />
                       <span>
                         <span className="d-block text-sm fw-medium text-line-clamp-1">{p.name}</span>
                         <span className="d-block text-xs text-primary">{formatMoney(p.price)}</span>

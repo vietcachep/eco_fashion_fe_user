@@ -65,7 +65,7 @@ kế hoạch trong `docs/plans/`.
 | `/products` | Danh sách + lọc (danh mục, giới tính, size, màu, giá, giảm giá) + sắp xếp + phân trang — tất cả trên URL |
 | `/products/[slug]` | Chi tiết: gallery, chọn màu/size theo tồn kho, số lượng, thêm giỏ, tab mô tả/bảo quản/đánh giá, liên quan |
 | `/cart` `/wishlist` | Giỏ hàng, yêu thích |
-| `/checkout` → `/checkout/success/[code]` | Đặt hàng (cần đăng nhập): chọn địa chỉ từ sổ, ghi chú, COD / chuyển khoản / thẻ sandbox, bảng chọn mã giảm giá → trang thành công (địa chỉ, thanh toán, hướng dẫn CK) |
+| `/checkout` → `/checkout/success/[groupCode]` | Đặt hàng (cần đăng nhập): chọn địa chỉ từ sổ, hàng nhóm theo gian hàng (bảng tiền riêng mỗi shop), ghi chú, COD / chuyển khoản / VNPay / PayOS (theo `GET /payment-methods`), chọn mã giảm giá (1 sàn + 1/shop) → trang thành công liệt kê từng đơn con (thanh toán lần lượt, QR chuyển khoản) |
 | `/login` `/register` `/forgot-password` | Xác thực (cũng có dạng offcanvas từ icon tài khoản) |
 | `/account/*` | Khu tài khoản (cần đăng nhập; chưa → `/login?next=`): `profile` hồ sơ + đổi mật khẩu · `orders` (tab trạng thái) · `orders/[code]` (hành trình, chuyển khoản, huỷ / đã nhận / trả hàng có minh chứng / đánh giá có ảnh-video) · `returns` · `addresses` · `reviews` |
 | `/about` `/contact` `/faq` `/shipping` `/returns-policy` `/privacy` `/terms` | Trang thông tin |

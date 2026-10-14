@@ -12,9 +12,15 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## Project Context
 
-Storefront (giao diện KHÁCH HÀNG) của một cửa hàng thời trang **duy nhất** — không phải sàn nhiều gian hàng.
+Storefront (giao diện KHÁCH HÀNG) của sàn thương mại điện tử **đa gian hàng, đa ngành hàng** (PLAN-0014
+marketplace shop/vendor, PLAN-0016 multi-category) — nhiều shop cùng bán, mỗi sản phẩm thuộc đúng 1 shop
+(`shop_id`/`shop_name` trên mọi response sản phẩm/đơn). Giỏ hàng nhiều shop → đặt hàng tách thành nhiều đơn
+con (OrderGroup, PLAN-0014 bước 7), mỗi đơn tính phí ship riêng.
 
-- Chỉ bán **quần áo**: áo thun, sơ mi, jean, short, váy, đầm, áo khoác — nam và nữ.
+- Bán **đa ngành hàng**: thời trang (áo thun, sơ mi, jean, short, váy, đầm, áo khoác — nam/nữ) là ngành hàng
+  ĐẦU TIÊN, không phải duy nhất. Ngành hàng khác (điện tử, gia dụng, mỹ phẩm...) KHÔNG có gender/color/size
+  cố định — mỗi category tự định nghĩa bộ thuộc tính riêng (`category.attributeMode: "dynamic"`), UI sản
+  phẩm/filter phải rẽ nhánh theo field này thay vì giả định mọi sản phẩm đều có màu/size (xem PLAN-0016).
 - **Chỉ tiếng Việt.** KHÔNG có đa ngôn ngữ, không next-intl, không `[locale]` trong route. Chuỗi giao diện viết thẳng tiếng Việt trong JSX.
 - **Chỉ VND.** Không đa tiền tệ. Mọi số tiền hiển thị qua `lib/format.ts`.
 - Thanh toán thật bằng thẻ/chuyển khoản Việt Nam — cổng cụ thể chốt ở `docs/plans/PLAN-0003`.
@@ -97,7 +103,7 @@ Trong giai đoạn mock, `cart-store` được phép tính tạm tính để mà
 ```text
 src/
 ├── app/            # (shop) (auth) (account) — routing + layout ONLY
-├── features/       # catalog · cart · order · identity · wishlist · review · system
+├── features/       # catalog · cart · order · payment · promotion · identity · wishlist · review · system (liên hệ, FAQ, thông báo trong-app)
 ├── components/     # layout/ (topbar, header, nav, footer, mobile-menu, toolbar) · shared/ (product-card, price, quantity, page-title...)
 ├── lib/            # api, api-error, constants, format, query-client, utils
 ├── stores/         # auth-store, cart-store, wishlist-store
@@ -162,6 +168,7 @@ Việc lớn (module mới, đổi auth, đổi app shell, nối backend, cổng
 
 ## Done Definition
 
+- CI tự động: `.github/workflows/ci.yml` chạy lint + typecheck + build cho mọi push lên `main` và mọi PR (client API/mã quyền sinh sẵn được commit nên CI không cần backend). Đẩy workflow lên GitHub cần token có quyền `workflow`.
 - `npm run build` zero TypeScript errors · `npm run lint` passes.
 - Rule 0–4 respected. Money Rule respected.
 - No feature imports another feature's internals. No hardcoded path.

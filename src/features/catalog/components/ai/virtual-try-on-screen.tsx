@@ -15,6 +15,7 @@ import { startTryOn, waitTryOn } from "@/features/catalog/api/ai-api";
 import { CHE_DO_MOCK } from "@/lib/api-mode";
 import { useAiStatus } from "@/features/catalog/hooks/use-ai";
 import { apiErrorMessage } from "@/lib/api-error";
+import { ANH_AI_ACCEPT, ANH_AI_TOI_DA_MB, chuanBiAnhAi, laAnhAiHopLe } from "@/features/catalog/lib/image-upload";
 
 /*
  * Thử đồ 2D (FITLY 4.4): tải ảnh -> chọn sản phẩm -> xử lý -> kết quả.
@@ -35,7 +36,10 @@ export function VirtualTryOnScreen({ products }: { products: ProductCardResponse
   const [loi, setLoi] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const chonAnh = (f: File) => { if (f.type.startsWith("image/")) { setFile(f); setAnh(URL.createObjectURL(f)); setStep("choose"); } };
+  const chonAnh = (f: File) => {
+    if (!laAnhAiHopLe(f)) { setLoi("Chỉ nhận ảnh JPG, PNG hoặc WebP."); return; }
+    setLoi(null); setFile(f); setAnh(URL.createObjectURL(f)); setStep("choose");
+  };
   /* Có backend: `POST /ai/try-on` tạo job (Replicate IDM-VTON) rồi thăm dò tới `done` (~30–90s); chế độ mẫu: hoạt cảnh + xem cạnh nhau. */
   const thuDo = async () => {
     if (!chon || !file) return;
@@ -46,7 +50,8 @@ export function VirtualTryOnScreen({ products }: { products: ProductCardResponse
     }
     try {
       setBuoc(0);
-      const job = await startTryOn(file, chon.id);
+      /* BE chỉ nhận ảnh ≤ 5MB — ảnh chụp điện thoại thường lớn hơn nên thu nhỏ ở trình duyệt trước. */
+      const job = await startTryOn(await chuanBiAnhAi(file), chon.id);
       if (!job.jobId) throw new Error(job.error ?? "Không tạo được lượt thử đồ");
       setBuoc(1);
       let nhip = 1;
@@ -65,7 +70,7 @@ export function VirtualTryOnScreen({ products }: { products: ProductCardResponse
   if (!tryOnBat) {
     return (
       <section className="flat-spacing-4"><div className="container text-center">
-        <span className="ai-note"><i className="icon icon-ask" /> Thử đồ 2D tạm chưa mở. Bạn thử <Link href={ROUTES.aiSuggest} className="link text-primary">gợi ý phối đồ từ ảnh</Link> hoặc quay lại sau nhé.</span>
+        <span className="ai-note"><i className="icon icon-ask" /> Thử đồ 2D tạm chưa mở. Bạn thử <Link href={ROUTES.aiAssistant} className="link text-primary">trợ lý mua sắm AI</Link> hoặc quay lại sau nhé.</span>
       </div></section>
     );
   }
@@ -92,10 +97,11 @@ export function VirtualTryOnScreen({ products }: { products: ProductCardResponse
                 <span className="box-icon"><IconUpload /></span>
                 <div>
                   <p className="text-md fw-medium text-dark">Tải ảnh của bạn lên</p>
-                  <p className="text-sm text-main mt_4">Ảnh toàn thân rõ nét cho kết quả tốt nhất. PNG, JPG — tối đa 10MB.</p>
+                  <p className="text-sm text-main mt_4">Ảnh toàn thân rõ nét cho kết quả tốt nhất. PNG, JPG, WebP — ảnh lớn hơn {ANH_AI_TOI_DA_MB}MB sẽ tự được thu nhỏ.</p>
                 </div>
               </div>
-              <input ref={fileRef} type="file" accept="image/*" className="d-none" onChange={(e) => { const f = e.target.files?.[0]; if (f) chonAnh(f); }} />
+              {loi && <p className="text-sm text-danger mt_12" role="alert">{loi}</p>}
+              <input ref={fileRef} type="file" accept={ANH_AI_ACCEPT} className="d-none" onChange={(e) => { const f = e.target.files?.[0]; if (f) chonAnh(f); }} />
             </div>
           </div>
         )}
@@ -111,6 +117,7 @@ export function VirtualTryOnScreen({ products }: { products: ProductCardResponse
             </div>
             <div className="col-lg-9">
               <p className="text-sm fw-medium mb_12">Chọn sản phẩm muốn thử{chon && <span className="text-primary"> — {chon.name}</span>}</p>
+              {products.length === 0 && <p className="text-md text-main mb_20">Hiện chưa có sản phẩm thời trang nào để thử. Bạn quay lại sau nhé.</p>}
               <div className="tf-grid-layout tf-col-2 md-col-3 xl-col-4">
                 {products.map((p) => (
                   <button type="button" key={p.id} className={cn("ai-pick", chon?.id === p.id && "active")} onClick={() => setChon(p)}>

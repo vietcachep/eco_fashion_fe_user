@@ -50,6 +50,8 @@ export function tinhUuDai(subtotal: number, shippingFee: number, now = new Date(
       const eligible = subtotal >= m.min_order && (m.type !== "free_shipping" || shippingFee > 0);
       return {
         code: m.code, type: m.type, name: m.name, description: m.description, end_at: m.end_at,
+        /* Mẫu chỉ có mã sàn — mã gian hàng chỉ có ở backend thật. */
+        scope: "platform" as const, shop_id: null, shop_name: null, reason: null,
         display_discount: tien(eligible ? giam : 0),
         display_value: m.type === "fixed_amount" ? tien(m.value) : null,
         display_min_order_amount: m.min_order > 0 ? tien(m.min_order) : null,

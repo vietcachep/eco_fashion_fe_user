@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ROUTES } from "@/lib/constants";
-import type { CategoryResponse, ProductCardResponse, ProductDetailResponse, ReviewResponse } from "@/features/catalog/types";
+import type { CategoryResponse, ProductCardResponse, ProductDetailResponse, ReviewPage } from "@/features/catalog/types";
 import { ProductDetails } from "@/features/catalog/components/detail/product-details";
 import { ProductDescription } from "@/features/catalog/components/detail/product-description";
 import { RelatedProducts } from "@/features/catalog/components/detail/related-products";
@@ -15,7 +15,7 @@ export function ProductDetailScreen({ product, category, similar, boughtTogether
   category: CategoryResponse | null;
   similar: ProductCardResponse[];
   boughtTogether: ProductCardResponse[];
-  reviews: ReviewResponse[];
+  reviews: ReviewPage;
   prev: ProductCardResponse | null;
   next: ProductCardResponse | null;
 }) {
@@ -39,7 +39,7 @@ export function ProductDetailScreen({ product, category, similar, boughtTogether
         </div>
       </div>
       <ProductDetails key={product.id} product={product} category={category} />
-      <ProductDescription product={product} reviews={reviews} />
+      <ProductDescription product={product} category={category} reviews={reviews} />
       <RelatedProducts products={boughtTogether} title="Thường mua cùng" navKey="bought" source="bought_together" />
       <RelatedProducts products={similar} title="Có thể bạn cũng thích" navKey="similar" source="similar" />
     </>

@@ -67,7 +67,7 @@ export function ProductGallery({ images, name, activeColor, onColorChange }: {
         breakpoints={{ 0: { direction: "horizontal", slidesPerView: 4 }, 768: { direction: "vertical", slidesPerView: 4 } }}>
         {images.map((img, i) => (
           <SwiperSlide key={img.url} className="swiper-slide stagger-item" data-color={img.color ?? undefined}>
-            <div className="item"><Image alt={`${name} ${i + 1}`} src={img.url} width={828} height={1241} /></div>
+            <div className="item"><Image alt={`${name} ${i + 1}`} src={img.url} width={828} height={1241} sizes="96px" /></div>
           </SwiperSlide>
         ))}
       </Swiper>
@@ -85,7 +85,7 @@ export function ProductGallery({ images, name, activeColor, onColorChange }: {
           {images.map((img, i) => (
             <SwiperSlide key={img.url} className="swiper-slide" data-color={img.color ?? undefined}>
               <a href={img.url} target="_blank" rel="noreferrer" className="item" data-pswp-width="900" data-pswp-height="1200">
-                <Image className="tf-image-zoom" data-zoom={img.url} alt={`${name} ${i + 1}`} src={img.url} width={828} height={1241} priority={i === 0} />
+                <Image className="tf-image-zoom" data-zoom={img.url} alt={`${name} ${i + 1}`} src={img.url} width={828} height={1241} sizes="(min-width: 1200px) 560px, (min-width: 768px) 46vw, 100vw" preload={i === 0} />
               </a>
             </SwiperSlide>
           ))}

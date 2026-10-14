@@ -6,15 +6,16 @@ import { usePathname, useRouter } from "next/navigation";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { useStoreHydrated } from "@/lib/hooks/use-store-hydrated";
-import { IconLogout } from "@/components/shared/icons";
+import { IconBell, IconLogout } from "@/components/shared/icons";
 import { useLogout } from "@/features/identity/hooks/use-auth-mutations";
+import { useUnreadNotificationCount } from "@/features/system/hooks/use-notifications";
 import { useAuthStore } from "@/stores/auth-store";
 
 /*
  * Khung khu tài khoản (theo eco_frontend_user, dựng bằng `main-content-account`
  * / `sidebar-account-wrap` / `my-account-nav` của Vineta): thẻ người dùng
  * (chữ cái đầu + tên + email), cột điều hướng Hồ sơ · Đơn hàng · Đổi trả · Địa
- * chỉ · Yêu thích · Đánh giá, Đăng xuất. Trên mobile cột thành dải cuộn ngang.
+ * chỉ · Yêu thích · Đánh giá · Thông báo (kèm chấm số chưa đọc), Đăng xuất. Trên mobile cột thành dải cuộn ngang.
  *
  * Chặn khách chưa đăng nhập MỘT lần ở đây cho mọi trang con: chưa hydrate thì
  * chưa kết luận gì (không đá ra login oan sau reload); hydrate xong mà chưa
@@ -22,6 +23,7 @@ import { useAuthStore } from "@/stores/auth-store";
  */
 export const MUC_TAI_KHOAN = [
   { href: ROUTES.accountProfile, label: "Hồ sơ của tôi", icon: "icon-user" },
+  { href: ROUTES.accountNotifications, label: "Thông báo", icon: "bell" },
   { href: ROUTES.accountOrders, label: "Đơn hàng của tôi", icon: "icon-order" },
   { href: ROUTES.accountReturns, label: "Đổi trả / hoàn tiền", icon: "icon-return" },
   { href: ROUTES.accountAddresses, label: "Sổ địa chỉ", icon: "icon-location" },
@@ -29,12 +31,32 @@ export const MUC_TAI_KHOAN = [
   { href: ROUTES.accountReviews, label: "Đánh giá của tôi", icon: "icon-star" },
 ] as const;
 
+/* Icon mục menu: glyph icomoon; riêng "bell" là SVG dùng chung vì bộ icomoon của Vineta không có chuông. */
+function BieuTuong({ icon }: { icon: string }) {
+  return icon === "bell" ? <IconBell /> : <i className={`icon ${icon}`} />;
+}
+
+/* Chấm số trên mục menu (thông báo chưa đọc) — chỉ hiện khi > 0; chữ ẩn cho trình đọc màn hình (số trơ trọi không có nghĩa). */
+function DemMuc({ dem }: { dem: { so: number; nhan: string } | null }) {
+  if (!dem || dem.so <= 0) return null;
+  return (
+    <>
+      <span className="acc-count" aria-hidden>{dem.so > 9 ? "9+" : dem.so}</span>
+      <span className="visually-hidden">{dem.so} {dem.nhan}</span>
+    </>
+  );
+}
+
 export function AccountShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const hydrated = useStoreHydrated(useAuthStore);
   const user = useAuthStore((s) => s.user);
   const logout = useLogout();
+  /* Hook phải gọi trước các `return` sớm bên dưới. Chưa đăng nhập thì query tự tắt (trả 0). */
+  const soThongBao = useUnreadNotificationCount();
+  const demCuaMuc = (href: string) =>
+    href === ROUTES.accountNotifications ? { so: soThongBao, nhan: "thông báo chưa đọc" } : null;
 
   useEffect(() => {
     if (hydrated && !user) router.replace(`${ROUTES.login}?next=${encodeURIComponent(pathname)}`);
@@ -53,7 +75,7 @@ export function AccountShell({ children }: { children: React.ReactNode }) {
         <nav className="acc-nav-mb d-lg-none" aria-label="Điều hướng tài khoản">
           {MUC_TAI_KHOAN.map((m) => (
             <Link key={m.href} href={m.href} className={cn("acc-pill", laActive(m.href) && "active")} aria-current={laActive(m.href) ? "page" : undefined}>
-              <i className={`icon ${m.icon}`} />{m.label}
+              <BieuTuong icon={m.icon} />{m.label}<DemMuc dem={demCuaMuc(m.href)} />
             </Link>
           ))}
           <a role="button" className="acc-pill" onClick={dangXuat}><IconLogout />Đăng xuất</a>
@@ -78,7 +100,7 @@ export function AccountShell({ children }: { children: React.ReactNode }) {
               {MUC_TAI_KHOAN.map((m) => (
                 <li key={m.href}>
                   <Link href={m.href} className={cn("text-sm link fw-medium my-account-nav-item", laActive(m.href) && "active")} aria-current={laActive(m.href) ? "page" : undefined}>
-                    <i className={`icon ${m.icon}`} />{m.label}
+                    <BieuTuong icon={m.icon} />{m.label}<DemMuc dem={demCuaMuc(m.href)} />
                   </Link>
                 </li>
               ))}

@@ -134,7 +134,7 @@ function DoiMatKhau() {
       <h6 className="text-md fw-semibold mb_4">Đổi mật khẩu</h6>
       <p className="text-xs text-main mb_16">Đổi xong, mọi thiết bị khác sẽ bị đăng xuất. Thiết bị này vẫn đăng nhập.</p>
       {loi && <p role="alert" className="checkout-error text-sm mb_16">{loi}</p>}
-      <form className="acc-form" noValidate onSubmit={(e) => {
+      <form method="post" className="acc-form" noValidate onSubmit={(e) => {
         e.preventDefault(); if (!guiDuoc) return; setLoi(null);
         doi.mutate({ current_password: cu, new_password: moi }, {
           onSuccess: () => { setCu(""); setMoi(""); setNhapLai(""); },

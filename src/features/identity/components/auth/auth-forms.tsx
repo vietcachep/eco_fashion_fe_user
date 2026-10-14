@@ -24,6 +24,8 @@ import { GoogleLoginButton } from "@/features/identity/components/auth/google-lo
  *  - offcanvas #login / #register / #resetPass (variant "drawer": nút phụ đổi
  *    offcanvas bằng data-bs-toggle),
  *  - trang /login /register /forgot-password (variant "page": nút phụ là Link).
+ * Mọi <form> ở file này đặt `method="post"`: nếu khách bấm gửi TRƯỚC khi trang hydrate, trình duyệt submit kiểu GET mặc định và
+ * đẩy email/mật khẩu/OTP lên URL (lọt vào lịch sử, log máy chủ). POST thì không bao giờ để lộ thông tin lên URL.
  */
 type Variant = "drawer" | "page";
 
@@ -46,7 +48,7 @@ export function LoginForm({ variant = "page", next }: { variant?: Variant; next?
   const loiDangNhap = dangNhap.isError ? (dangNhap.error instanceof Error ? dangNhap.error.message : "Đăng nhập thất bại") : null;
 
   return (
-    <form className="form-login" noValidate onSubmit={form.handleSubmit((input) => dangNhap.mutate(input, {
+    <form method="post" className="form-login" noValidate onSubmit={form.handleSubmit((input) => dangNhap.mutate(input, {
       onSuccess: async (user) => { toast.success(`Xin chào ${user.full_name}`); await hideOverlays(); router.push(variant === "drawer" ? window.location.pathname : dich); },
     }))}>
       {loiDangNhap && (
@@ -161,7 +163,7 @@ export function RegisterForm({ variant = "page" }: { variant?: Variant }) {
 
   if (step === "otp") {
     return (
-      <form className="form-login" noValidate onSubmit={otpForm.handleSubmit(onOtpSubmit)}>
+      <form method="post" className="form-login" noValidate onSubmit={otpForm.handleSubmit(onOtpSubmit)}>
         {loiHienThi && (
           <div className="alert alert-danger py-2 px-3 mb_16 text-sm rounded-3 d-flex align-items-center gap-2" role="alert">
             <i className="icon-alert-circle text-base flex-shrink-0" />
@@ -218,7 +220,7 @@ export function RegisterForm({ variant = "page" }: { variant?: Variant }) {
   }
 
   return (
-    <form className="form-login" noValidate onSubmit={form.handleSubmit(onFormSubmit)}>
+    <form method="post" className="form-login" noValidate onSubmit={form.handleSubmit(onFormSubmit)}>
       {loiHienThi && (
         <div className="alert alert-danger py-2 px-3 mb_16 text-sm rounded-3 d-flex align-items-center gap-2" role="alert">
           <i className="icon-alert-circle text-base flex-shrink-0" />
@@ -347,7 +349,7 @@ export function ForgotPasswordForm({ variant = "page" }: { variant?: Variant }) 
 
   if (step === "reset") {
     return (
-      <form className="form-login" noValidate onSubmit={resetForm.handleSubmit(onResetSubmit)}>
+      <form method="post" className="form-login" noValidate onSubmit={resetForm.handleSubmit(onResetSubmit)}>
         {loiHienThi && (
           <div className="alert alert-danger py-2 px-3 mb_16 text-sm rounded-3 d-flex align-items-center gap-2" role="alert">
             <i className="icon-alert-circle text-base flex-shrink-0" />
@@ -425,7 +427,7 @@ export function ForgotPasswordForm({ variant = "page" }: { variant?: Variant }) 
   }
 
   return (
-    <form className="form-login" noValidate onSubmit={emailForm.handleSubmit(onEmailSubmit)}>
+    <form method="post" className="form-login" noValidate onSubmit={emailForm.handleSubmit(onEmailSubmit)}>
       {loiHienThi && (
         <div className="alert alert-danger py-2 px-3 mb_16 text-sm rounded-3 d-flex align-items-center gap-2" role="alert">
           <i className="icon-alert-circle text-base flex-shrink-0" />

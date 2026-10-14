@@ -55,6 +55,25 @@ export function formatDateTime(iso: string): string {
   return `${t.gio}:${t.phut} ${t.ngay}/${t.thang}/${t.nam}`;
 }
 
+/*
+ * Thời gian tương đối cho thông báo: "Vừa xong" · "5 phút trước" · "3 giờ trước" · "2 ngày trước"; từ 7 ngày trở đi ghi
+ * ngày thật (cùng múi giờ VN với `formatDate`). Phụ thuộc `Date.now()` nên CHỈ dùng cho dữ liệu vẽ ở client (kết quả
+ * query) — vẽ trong HTML server rồi hydrate sẽ lệch chuỗi. `now` truyền được để kiểm thử; đồng hồ máy khách chạy trước
+ * server (ra số âm) coi như "Vừa xong".
+ */
+export function formatRelativeTime(iso: string, now: number = Date.now()): string {
+  const t = new Date(iso).getTime();
+  if (!Number.isFinite(t)) return "—";
+  const phut = Math.floor((now - t) / 60_000);
+  if (phut < 1) return "Vừa xong";
+  if (phut < 60) return `${phut} phút trước`;
+  const gio = Math.floor(phut / 60);
+  if (gio < 24) return `${gio} giờ trước`;
+  const ngay = Math.floor(gio / 24);
+  if (ngay < 7) return `${ngay} ngày trước`;
+  return formatDate(iso);
+}
+
 /* Phần trăm giảm — làm tròn xuống để không hứa nhiều hơn mức giảm thật. */
 export function discountPercent(price: number, listPrice: number): number {
   if (!listPrice || listPrice <= price) return 0;

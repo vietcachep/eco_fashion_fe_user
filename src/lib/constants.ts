@@ -5,7 +5,7 @@
  */
 
 export const APP_NAME = "FITLY";
-export const APP_TAGLINE = "Thời trang cho mọi khoảnh khắc";
+export const APP_TAGLINE = "Mua sắm mọi thứ bạn cần";
 
 export const ROUTES = {
   home: "/",
@@ -13,11 +13,18 @@ export const ROUTES = {
   product: (slug: string) => `/products/${slug}`,
   category: (slug: string) => `/products?category=${slug}`,
   collection: (slug: string) => `/collections/${slug}`,
+  /* Mini-storefront theo gian hàng (PLAN-0008) — marketplace, không phải danh mục. */
+  shop: (slug: string) => `/shop/${slug}`,
+  /* Danh sách các gian hàng đã duyệt (`GET /shops`). */
+  shops: "/shops",
   cart: "/cart",
   checkout: "/checkout",
-  checkoutSuccess: (code: string) => `/checkout/success/${code}`,
+  /* Trang đặt thành công — tham số là mã ĐƠN CHA (DHN…); màn cũng nhận mã đơn con (DH…) và tự tìm ra nhóm chứa nó. */
+  checkoutSuccess: (groupCode: string) => `/checkout/success/${groupCode}`,
   /* VNPay đưa khách quay lại đây (EF_WEB_URL/checkout/vnpay-return) — BE xác minh chữ ký rồi mới sang trang cảm ơn. */
   checkoutVnpayReturn: "/checkout/vnpay-return",
+  /* PayOS đưa khách quay lại đây kèm `orderCode` của PayOS — BE hỏi lại PayOS rồi ghi nhận. */
+  checkoutPayosReturn: "/checkout/payos-return",
   wishlist: "/wishlist",
   compare: "/compare",
   login: "/login",
@@ -25,11 +32,14 @@ export const ROUTES = {
   forgotPassword: "/forgot-password",
   account: "/account",
   accountOrders: "/account/orders",
+  /* Chi tiết đơn — tham số là mã đơn CHA (nhóm các đơn con, xem `laMaDonCha`) hoặc mã đơn CON (một shop). */
   accountOrder: (code: string) => `/account/orders/${code}`,
   accountAddresses: "/account/addresses",
   accountProfile: "/account/profile",
   accountReturns: "/account/returns",
   accountReviews: "/account/reviews",
+  /* Thông báo trong-app của tôi (`GET /notifications`); chuông ở header + menu tài khoản dẫn tới đây. */
+  accountNotifications: "/account/notifications",
   about: "/about",
   contact: "/contact",
   faq: "/faq",
@@ -38,9 +48,17 @@ export const ROUTES = {
   privacy: "/privacy",
   terms: "/terms",
   /* FITLY AI features */
-  aiSuggest: "/ai-suggest",
-  virtualTryOn: "/virtual-try-on",
+  aiAssistant: "/ai-assistant",
+  aiImageSearch: "/ai-image-search",
+  aiReviewSummary: "/ai-review-summary",
 } as const;
+
+/*
+ * Mã đơn CHA (nhóm nhiều đơn con) hay mã đơn CON? BE sinh đơn cha "DHN…", đơn con "DH<số>…"; dữ liệu seed cũ đặt đơn cha là
+ * "GR…" (đơn con "DHSEED…"/"DHDEMO…") nên nhận cả hai. Thông báo của BE gắn link `/account/orders/{mãCha}` nên chi tiết đơn
+ * phải rẽ nhánh theo mã — gọi nhầm `GET /orders/{mãCha}` là 404.
+ */
+export const laMaDonCha = (code: string) => /^(DHN|GR)/i.test(code.trim());
 
 /* 12 = bội của 2·3·4 — lưới 2/3/4 cột luôn đủ hàng cuối ở mọi khổ màn hình. */
 export const PRODUCT_PAGE_SIZE = 12;

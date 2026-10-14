@@ -36,7 +36,7 @@ export function CompareModal() {
                     <div key={p.id} className="tf-compare-item file-delete">
                       <span className="icon-close remove" role="button" aria-label="Bỏ" onClick={() => remove(p.id)} />
                       <Link onClick={dongPopup} href={ROUTES.product(p.slug)} className="image">
-                        <Image alt={p.name} src={p.image_url} width={1000} height={1421} />
+                        <Image alt={p.name} src={p.image_url} width={1000} height={1421} sizes="140px" />
                       </Link>
                       <div className="content">
                         <div className="text-title">

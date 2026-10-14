@@ -11,7 +11,7 @@ import { QuantitySelect } from "@/components/shared/quantity-select";
 import type { ProductDetailResponse } from "@/features/catalog/types";
 import { useVariantPicker } from "@/features/catalog/hooks/use-variant-picker";
 import { useProductDetail } from "@/features/catalog/hooks/use-product-detail";
-import { ColorPicker, SizePicker } from "@/features/catalog/components/detail/variant-picker";
+import { VariantPickers } from "@/features/catalog/components/detail/variant-picker";
 import { useAddToCart } from "@/features/cart/hooks/use-add-to-cart";
 import { useUiStore } from "@/stores/ui-store";
 
@@ -26,13 +26,18 @@ const dongPopup = () => { void hideOverlays(); };
  */
 export function QuickViewModal() {
   const slug = useUiStore((s) => s.quickViewSlug);
-  const { data } = useProductDetail(slug);
+  const { data, isError, refetch } = useProductDetail(slug);
   return (
     <div className="modal fade modalCentered modal-quick-view" id="quickView">
       <div className="modal-dialog modal-dialog-centered">
         <div className="modal-content">
           <span className="icon-close icon-close-popup" data-bs-dismiss="modal" role="button" aria-label="Đóng" />
-          {data ? <QuickViewBody key={data.id} product={data} /> : <div className="p-5 text-center w-100">Đang tải...</div>}
+          {data ? <QuickViewBody key={data.id} product={data} /> : isError || (slug && data === null) ? (
+            <div className="p-5 text-center w-100">
+              <p className="text-md mb_12">{isError ? "Chưa tải được sản phẩm." : "Sản phẩm không còn bán."}</p>
+              {isError && <button type="button" className="tf-btn btn-out-line-dark2" onClick={() => void refetch()}>Thử lại</button>}
+            </div>
+          ) : <div className="p-5 text-center w-100">Đang tải...</div>}
         </div>
       </div>
     </div>
@@ -42,17 +47,20 @@ export function QuickViewModal() {
 function QuickViewBody({ product }: { product: ProductDetailResponse }) {
   const vp = useVariantPicker(product);
   const { themVaMo, muaNgay } = useAddToCart();
-  const anh = product.images.filter((i) => i.color === vp.color);
+  const anh = product.images.filter((i) => i.color === vp.mau);
   const ds = anh.length ? anh : product.images;
-  const giam = product.list_price ? discountPercent(Number(product.price.amount), Number(product.list_price.amount)) : 0;
+  /* Giá gạch chỉ khi CAO hơn giá biến thể đang chọn (xem `product-details.tsx`). */
+  const giaBan = vp.variant?.price ?? product.price;
+  const giaGach = product.list_price && Number(product.list_price.amount) > Number(giaBan.amount) ? product.list_price : null;
+  const giam = giaGach ? discountPercent(Number(giaBan.amount), Number(giaGach.amount)) : 0;
 
   return (
     <>
       <div className="tf-product-media-wrap">
-        <Swiper key={vp.color} dir="ltr" className="swiper tf-single-slide" modules={[Navigation]} navigation={{ prevEl: ".qvsnp1", nextEl: ".qvsnn1" }}>
-          {ds.map((i) => (
+        <Swiper key={vp.mau} dir="ltr" className="swiper tf-single-slide" modules={[Navigation]} navigation={{ prevEl: ".qvsnp1", nextEl: ".qvsnn1" }}>
+          {(ds.length ? ds : [{ url: product.image_url, color: null }]).map((i) => (
             <SwiperSlide className="swiper-slide" key={i.url}>
-              <div className="item"><Image alt={product.name} src={i.url} width={513} height={729} /></div>
+              <div className="item"><Image alt={product.name} src={i.url} width={513} height={729} sizes="(min-width: 768px) 340px, 90vw" /></div>
             </SwiperSlide>
           ))}
           <div className="swiper-button-prev nav-swiper arrow-1 nav-prev-cls single-slide-prev qvsnp1" />
@@ -64,16 +72,17 @@ function QuickViewBody({ product }: { product: ProductDetailResponse }) {
           <div className="tf-product-heading">
             <h6 className="product-name"><Link onClick={dongPopup} href={ROUTES.product(product.slug)} className="link">{product.name}</Link></h6>
             <div className="product-price">
-              <h6 className="price-new price-on-sale">{formatMoney(vp.variant?.price ?? product.price)}</h6>
-              {product.list_price && <h6 className="price-old">{formatMoney(product.list_price)}</h6>}
+              <h6 className="price-new price-on-sale">{formatMoney(giaBan)}</h6>
+              {giaGach && <h6 className="price-old">{formatMoney(giaGach)}</h6>}
               {giam > 0 && <span className="badge-sale">Giảm {giam}%</span>}
             </div>
             <p className="text">{product.short_description}</p>
           </div>
-          <div className="tf-product-variant">
-            <ColorPicker colors={product.colors} value={vp.color} onChange={vp.chonMau} />
-            <SizePicker sizes={vp.sizeTrangThai} value={vp.size} onChange={vp.chonSize} showGuide={false} />
-          </div>
+          {vp.truc.length > 0 && (
+            <div className="tf-product-variant">
+              <VariantPickers truc={vp.truc} colors={product.colors} onChange={vp.chon} showGuide={false} />
+            </div>
+          )}
           <div className="tf-product-total-quantity">
             <div className="group-btn">
               <QuantitySelect quantity={vp.quantity} max={vp.max} onChange={vp.setQuantity} />

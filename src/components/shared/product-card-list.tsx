@@ -17,6 +17,9 @@ import { useUiStore } from "@/stores/ui-store";
  * style-list`): ảnh trái, phải là tên · giá · mô tả ngắn · chấm màu · size,
  * dưới là nút Thêm giỏ + yêu thích + so sánh. Dùng khi khách chọn layout list.
  */
+/* Thẻ danh sách: ảnh chiếm ~1/3 hàng ở màn rộng, gần nửa ở mobile. */
+const SIZES_THE = "(min-width: 1200px) 220px, (min-width: 768px) 28vw, 40vw";
+
 export function ProductCardList({ product, description }: { product: ProductCardResponse; description?: string }) {
   /* Ảnh/màu đang rê — khoá theo product.id để đổi sản phẩm là về mặc định, không cần effect. */
   const [chon, setChon] = useState<{ id: string; anh: string } | null>(null);
@@ -34,8 +37,8 @@ export function ProductCardList({ product, description }: { product: ProductCard
     <div className="card-product style-list">
       <div className="card-product-wrapper">
         <Link href={href} className="product-img">
-          <Image className="img-product" alt={product.name} src={anh} width={684} height={972} />
-          <Image className="img-hover" alt="" src={product.hover_image_url ?? anh} width={684} height={972} />
+          <Image className="img-product" alt={product.name} src={anh} width={684} height={972} sizes={SIZES_THE} />
+          <Image className="img-hover" alt="" src={product.hover_image_url ?? anh} width={684} height={972} sizes={SIZES_THE} />
         </Link>
         {product.badge && (
           <div className="on-sale-wrap">
@@ -46,6 +49,14 @@ export function ProductCardList({ product, description }: { product: ProductCard
       <div className="card-product-info">
         <div className="info-list">
           <Link href={href} className="name-product link fw-medium text-md">{product.name}</Link>
+          {product.shop && (
+            <Link href={ROUTES.shop(product.shop.slug)} className="link text-xs text-main d-flex align-items-center gap-1">
+              {product.shop.logo_url
+                ? <Image src={product.shop.logo_url} alt="" width={16} height={16} sizes="16px" className="rounded-circle" style={{ objectFit: "cover" }} />
+                : <span className="icon icon-shop" />}
+              <span className="text-line-clamp-1">{product.shop.name}</span>
+            </Link>
+          )}
           <Price price={product.price} listPrice={product.list_price} className="text-md" />
           {description && <p className="decs text-sm text-main text-line-clamp-2">{description}</p>}
           <ul className="list-color-product">

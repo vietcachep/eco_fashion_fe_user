@@ -22,6 +22,9 @@ import { useUiStore } from "@/stores/ui-store";
  * `source`: thẻ nằm trong dải gợi ý AI nào (PLAN-0007) — bấm vào là ghi tín hiệu `click` và nhớ nguồn để lượt thêm giỏ
  * sau đó được tính cho dải ấy.
  */
+/* Lưới danh sách 2/3/4 cột tuỳ khổ màn — `sizes` đúng để trình duyệt chọn ảnh vừa khung thay vì tải bản 2x lớn. */
+const SIZES_THE = "(min-width: 1200px) 25vw, (min-width: 768px) 33vw, 50vw";
+
 export function ProductCard({ product, styleClass = "style-1", tooltipDirection = "left", textCenter = false, ratioClass = "", source }: {
   product: ProductCardResponse;
   styleClass?: string;
@@ -40,7 +43,9 @@ export function ProductCard({ product, styleClass = "style-1", tooltipDirection 
   const themSoSanh = useCompareStore((s) => s.add);
   const setQuickView = useUiStore((s) => s.setQuickView);
   const href = ROUTES.product(product.slug);
-  const hetHang = product.sizes.length === 0;
+  /* PLAN-0016: dùng in_stock thật (BE), KHÔNG suy từ sizes.length — category dynamic (điện thoại, mỹ
+     phẩm…) không có size nên sizes luôn rỗng dù còn hàng. */
+  const hetHang = !product.in_stock;
   const ghiClick = () => { if (source) { nhoNguon(product.id, source); ghiSuKien([{ productId: product.id, eventType: "click", source }]); } };
   const moQuickView = () => { ghiClick(); setQuickView(product.slug); void showModal("quickView"); };
 
@@ -48,8 +53,8 @@ export function ProductCard({ product, styleClass = "style-1", tooltipDirection 
     <div className={cn("card-product", product.sizes.length > 0 && "card-product-size", hetHang && "out-of-stock", styleClass)}>
       <div className={cn("card-product-wrapper", ratioClass)}>
         <Link href={href} className="product-img" onClick={ghiClick}>
-          <Image className="img-product" alt={product.name} src={anh} width={513} height={729} />
-          <Image className="img-hover" alt="" src={product.hover_image_url ?? anh} width={513} height={729} />
+          <Image className="img-product" alt={product.name} src={anh} width={513} height={729} sizes={SIZES_THE} />
+          <Image className="img-hover" alt="" src={product.hover_image_url ?? anh} width={513} height={729} sizes={SIZES_THE} />
         </Link>
         {product.badge && (
           <div className="on-sale-wrap">
@@ -94,6 +99,15 @@ export function ProductCard({ product, styleClass = "style-1", tooltipDirection 
       </div>
       <div className={cn("card-product-info", textCenter && "text-center")}>
         <Link href={href} className="name-product link fw-medium text-md" onClick={ghiClick}>{product.name}</Link>
+        {product.shop && (
+          <Link href={ROUTES.shop(product.shop.slug)} onClick={(e) => e.stopPropagation()}
+            className={cn("link text-xs text-main d-flex align-items-center gap-1", textCenter && "justify-content-center")}>
+            {product.shop.logo_url
+              ? <Image src={product.shop.logo_url} alt="" width={16} height={16} sizes="16px" className="rounded-circle" style={{ objectFit: "cover" }} />
+              : <span className="icon icon-shop" />}
+            <span className="text-line-clamp-1">{product.shop.name}</span>
+          </Link>
+        )}
         <Price price={product.price} listPrice={product.list_price} />
         {product.colors.length > 0 && (
           <ul className={cn("list-color-product", textCenter && "justify-content-center")}>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useSyncExternalStore } from "react";
+import { CHE_DO_MOCK } from "@/lib/api-mode";
 import { SU_KIEN_DANH_GIA, docDanhGiaCuaToiTheoSanPham } from "@/features/order/api/order-api";
 import type { MyReviewResponse } from "@/features/order/types";
 import { useAuthStore } from "@/stores/auth-store";
@@ -23,6 +24,8 @@ export function useMyProductReviews(productId: string): MyReviewResponse[] {
     return () => { window.removeEventListener(SU_KIEN_DANH_GIA, cb); window.removeEventListener("storage", cb); boAuth(); };
   }, []);
   const getSnapshot = useCallback(() => {
+    /* Có backend: danh sách đánh giá của trang sản phẩm đã gồm bài của khách (server trả) — không đọc localStorage mẫu nữa. */
+    if (!CHE_DO_MOCK) return TRONG;
     /* Snapshot phải ổn định theo tham chiếu: chỉ tính lại khi dữ liệu thô đổi. */
     const khoa = `${localStorage.getItem("fashion-mock-my-reviews") ?? ""}|${useAuthStore.getState().user?.email ?? ""}`;
     const c = cache.get(productId);

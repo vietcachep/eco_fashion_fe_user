@@ -1,4 +1,4 @@
-import type { OrderStatus, PaymentMethodCode, PaymentStatus, ReturnStatus } from "@/features/order/types";
+import type { OrderResponse, OrderStatus, PaymentMethodCode, PaymentStatus, ReturnStatus } from "@/features/order/types";
 
 /*
  * Nhãn + luật hiển thị theo trạng thái đơn. Nhãn ở đây (không ở component)
@@ -10,6 +10,17 @@ import type { OrderStatus, PaymentMethodCode, PaymentStatus, ReturnStatus } from
  * huỷ sai.
  */
 export const CANCELLABLE: OrderStatus[] = ["pending"];
+
+/*
+ * Nút Huỷ / Trả hàng / Đánh giá của MỘT đơn CON — danh sách và chi tiết dùng chung một luật (trước đây mỗi nơi tự suy,
+ * danh sách bỏ qua cờ của server). Có backend thì tin `can_cancel` / `can_return` (server biết cửa sổ đổi trả và yêu cầu đã
+ * có); chế độ mẫu không có cờ nên suy từ trạng thái. Đơn CHA không có nút nào — chỉ đơn con thuộc đúng một shop mới huỷ/trả được.
+ */
+type DonCoCo = Pick<OrderResponse, "status" | "can_cancel" | "can_return">;
+export const canCancelOrder = (o: DonCoCo) => o.can_cancel ?? CANCELLABLE.includes(o.status);
+export const canReturnOrder = (o: DonCoCo) => o.can_return ?? (o.status === "delivered" || o.status === "completed");
+/* Đánh giá được khi đã nhận hàng — KHÔNG gắn với cửa sổ đổi trả (đơn đã hết hạn trả vẫn đánh giá được). */
+export const canReviewOrder = (o: Pick<OrderResponse, "status">) => o.status === "delivered" || o.status === "completed";
 
 export const TRANG_THAI_DON: Record<OrderStatus, string> = {
   pending: "Chờ xác nhận",
@@ -41,6 +52,7 @@ export const TEN_PHUONG_THUC: Record<PaymentMethodCode, string> = {
   bank_transfer: "Chuyển khoản ngân hàng",
   card: "Thẻ quốc tế",
   vnpay: "Thẻ / QR qua VNPay",
+  payos: "Quét mã QR qua PayOS",
 };
 
 export const TRANG_THAI_TRA: Record<ReturnStatus, string> = {
@@ -50,14 +62,19 @@ export const TRANG_THAI_TRA: Record<ReturnStatus, string> = {
   refunded: "Đã hoàn tiền",
 };
 
-/* Tab của "Đơn hàng của tôi" — nằm trên `?status=` để chia sẻ được link và bấm back đúng ý. */
-export const TAB_DON: { key: string; label: string; statuses: OrderStatus[] }[] = [
-  { key: "all", label: "Tất cả", statuses: [] },
-  { key: "pending", label: "Chờ xác nhận", statuses: ["pending", "confirmed"] },
-  { key: "packing", label: "Chờ lấy hàng", statuses: ["packing"] },
-  { key: "shipping", label: "Đang giao", statuses: ["shipping"] },
-  { key: "delivered", label: "Đã giao", statuses: ["delivered"] },
-  { key: "completed", label: "Hoàn tất", statuses: ["completed"] },
-  { key: "cancelled", label: "Đã huỷ", statuses: ["cancelled"] },
-  { key: "returned", label: "Trả hàng", statuses: ["returned"] },
+/*
+ * Tab của "Đơn hàng của tôi" — nằm trên `?status=` để chia sẻ được link và bấm back đúng ý.
+ * `all` = danh sách theo ĐƠN CHA; mọi tab còn lại lọc theo trạng thái ĐƠN CON ở server (`GET /orders?status=` nhận MỘT trạng
+ * thái) nên mỗi tab đúng một trạng thái — gộp hai trạng thái vào một tab sẽ phải lọc ở client và vỡ phân trang.
+ */
+export const TAB_DON: { key: "all" | OrderStatus; label: string }[] = [
+  { key: "all", label: "Tất cả" },
+  { key: "pending", label: TRANG_THAI_DON.pending },
+  { key: "confirmed", label: TRANG_THAI_DON.confirmed },
+  { key: "packing", label: "Chờ lấy hàng" },
+  { key: "shipping", label: TRANG_THAI_DON.shipping },
+  { key: "delivered", label: TRANG_THAI_DON.delivered },
+  { key: "completed", label: TRANG_THAI_DON.completed },
+  { key: "cancelled", label: TRANG_THAI_DON.cancelled },
+  { key: "returned", label: "Trả hàng" },
 ];

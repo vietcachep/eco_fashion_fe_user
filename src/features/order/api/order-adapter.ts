@@ -1,43 +1,89 @@
-import type { CheckoutSummaryResponse as BeSummary, OrderResponse as BeOrder, ReturnRequestResponse as BeReturn } from "@/lib/api/generated/model";
+import type {
+  CheckoutSummaryResponse as BeSummary, OrderGroupResponse as BeGroup, OrderResponse as BeOrder, ReturnRequestResponse as BeReturn,
+} from "@/lib/api/generated/model";
 import type { MediaItem } from "@/types/common";
 import type {
-  CheckoutSummaryResponse, MyReviewResponse, OrderItemResponse, OrderResponse, OrderStatus, PaymentMethodCode, PaymentStatus, ReturnRequestResponse, ReturnStatus,
+  CheckoutSummaryResponse, MyReviewResponse, OrderGroupResponse, OrderItemResponse, OrderResponse, OrderStatus, PaymentMethodCode, PaymentStatus, ReturnRequestResponse, ReturnStatus,
 } from "@/features/order/types";
 
 /*
  * ADAPTER order: DTO camelCase của NestJS → snake_case của FE (PLAN-0006). Tiền giữ nguyên `MoneyResponse`
  * server trả (Money Rule). BE không có `card_last4` (không lưu số thẻ) → null.
+ * Swagger khai mọi trường `nullable` không kèm `type` nên Orval sinh chúng thành `{[key]: unknown} | null` —
+ * đọc qua `chuoi`/`maKhuyenMai` thay vì ép kiểu rải rác (điểm ép kiểu DUY NHẤT của feature này).
  */
 const chuoi = (v: unknown): string | null => (typeof v === "string" ? v : null);
 
+/* Voucher của đơn: `{code, name}` hoặc null. */
+function maKhuyenMai(v: unknown): { code: string; name: string | null } | null {
+  if (!v || typeof v !== "object") return null;
+  const o = v as { code?: unknown; name?: unknown };
+  return typeof o.code === "string" ? { code: o.code, name: chuoi(o.name) } : null;
+}
+
 export function chuanHoaDon(b: BeOrder): OrderResponse {
-  const promotion = (b.promotion ?? null) as { code: string; name: string | null } | null;
-  const intent = (b.paymentIntent ?? null) as { bankCode: string; accountNumber: string; accountName: string; transferContent: string; qrUrl: string | null } | null;
+  const intent = b.paymentIntent ?? null;
   return {
     code: b.code,
     status: b.status as OrderStatus,
+    status_label: b.statusLabel,
+    shop_id: b.shopId,
+    shop_name: b.shopName,
     payment_method_code: b.paymentMethodCode as PaymentMethodCode,
     payment_status: b.paymentStatus as PaymentStatus,
     card_brand: chuoi(b.cardBrand), card_last4: null, transaction_code: chuoi(b.transactionCode),
     recipient_name: b.recipientName, recipient_phone: b.recipientPhone, shipping_address: b.shippingAddress, customer_note: chuoi(b.customerNote),
     items: (b.items ?? []).map<OrderItemResponse>((i) => ({
-      id: i.id, variant_id: i.variantId, product_id: i.productId, slug: i.slug, name: i.name, image_url: chuoi(i.imageUrl) ?? "", color: i.color, size: i.size,
+      id: i.id, variant_id: i.variantId, product_id: i.productId, slug: i.slug, name: i.name, image_url: chuoi(i.imageUrl) ?? "", color: i.color ?? "", size: i.size ?? "",
       quantity: i.quantity, unit_price: i.unitPrice, line_total: i.lineTotal, reviewed: Boolean(i.reviewed),
     })),
     subtotal: b.subtotal, shipping_fee: b.shippingFee, discount: b.discount,
-    promotion: promotion ? { code: promotion.code, name: promotion.name ?? null } : null,
+    promotion: maKhuyenMai(b.promotion),
+    shop_promotion: maKhuyenMai(b.shopPromotion),
+    shop_discount: b.shopDiscount, platform_discount: b.platformDiscount,
     total: b.total,
-    payment_intent: intent ? { bank_code: intent.bankCode, account_number: intent.accountNumber, account_name: intent.accountName, transfer_content: intent.transferContent, qr_url: intent.qrUrl ?? null } : null,
+    payment_intent: intent
+      ? { bank_code: intent.bankCode, account_number: intent.accountNumber, account_name: intent.accountName, transfer_content: intent.transferContent, qr_url: chuoi(intent.qrUrl), amount: intent.amount, expires_at: chuoi(intent.expiresAt) }
+      : null,
     payment_url: chuoi(b.paymentUrl),
+    payment_expires_at: chuoi(b.paymentExpiresAt),
     tracking_url: chuoi(b.trackingUrl),
+    cancel_reason: chuoi(b.cancelReason),
     history: (b.history ?? []).map((h) => ({ to_status: h.toStatus as OrderStatus, created_at: h.createdAt, note: chuoi(h.note) })),
     created_at: b.createdAt,
     can_cancel: Boolean(b.canCancel), can_return: Boolean(b.canReturn),
   };
 }
 
+/* Đơn cha: tổng + địa chỉ, mỗi đơn con chuẩn hoá lại bằng `chuanHoaDon` (đủ field để hiện/thanh toán từng đơn). */
+export function chuanHoaNhom(b: BeGroup): OrderGroupResponse {
+  return {
+    code: b.code,
+    recipient_name: b.recipientName,
+    recipient_phone: b.recipientPhone,
+    shipping_address: b.shippingAddress,
+    subtotal: b.subtotal, shipping_fee: b.shippingFee, discount: b.discount, total: b.total,
+    orders: (b.orders ?? []).map(chuanHoaDon),
+    created_at: b.createdAt,
+  };
+}
+
+/* Bảng tiền: đủ phần chia theo shop (`shopGroups`) và kết quả từng mã (`vouchers`) — FE chỉ vẽ, không tính lại. */
 export function chuanHoaBangTien(b: BeSummary): CheckoutSummaryResponse {
-  return { subtotal: b.subtotal, shipping_fee: b.shippingFee, discount: b.discount, total: b.total, promotion_code: chuoi(b.promotionCode), promotion_error: chuoi(b.promotionError), item_count: b.itemCount };
+  return {
+    subtotal: b.subtotal, shipping_fee: b.shippingFee, discount: b.discount, total: b.total,
+    promotion_code: chuoi(b.promotionCode), promotion_error: chuoi(b.promotionError), item_count: b.itemCount,
+    province_name: chuoi(b.provinceName),
+    warnings: b.warnings ?? [],
+    vouchers: (b.vouchers ?? []).map((v) => ({
+      code: v.code, scope: v.scope === "shop" ? "shop" : "platform", shop_id: chuoi(v.shopId), shop_name: chuoi(v.shopName),
+      ok: v.ok, error: chuoi(v.error), discount: v.discount,
+    })),
+    shop_groups: (b.shopGroups ?? []).map((g) => ({
+      shop_id: g.shopId, shop_name: g.shopName, item_count: g.itemCount,
+      subtotal: g.subtotal, shipping_fee: g.shippingFee, discount: g.discount, total: g.total,
+    })),
+  };
 }
 
 export function chuanHoaTraHang(b: BeReturn): ReturnRequestResponse {
@@ -53,8 +99,13 @@ export function chuanHoaTraHang(b: BeReturn): ReturnRequestResponse {
 export interface BeMyReview {
   id: string; productId: string; productName: string; productSlug: string; imageUrl: string | null; rating: number; content: string;
   media: MediaItem[]; variantLabel: string | null; status: string; createdAt: string;
+  /* BE chưa khai trường này ở `MyReviewResponse` — cùng hình dạng `reply` của đánh giá công khai (staffName = tên shop khi shop trả lời). */
+  reply?: { staffName: string; content: string; createdAt: string } | null;
 }
 
 export function chuanHoaDanhGiaCuaToi(b: BeMyReview): MyReviewResponse {
-  return { id: b.id, product_id: b.productId, product_name: b.productName, product_slug: b.productSlug, image_url: b.imageUrl ?? "", rating: b.rating, content: b.content, media: b.media ?? [], variant_label: b.variantLabel, created_at: b.createdAt };
+  return {
+    id: b.id, product_id: b.productId, product_name: b.productName, product_slug: b.productSlug, image_url: b.imageUrl ?? "", rating: b.rating, content: b.content, media: b.media ?? [], variant_label: b.variantLabel, created_at: b.createdAt,
+    reply: b.reply ? { shop_name: b.reply.staffName, content: b.reply.content, created_at: b.reply.createdAt } : null,
+  };
 }

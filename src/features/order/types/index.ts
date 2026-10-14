@@ -1,17 +1,37 @@
 import type { MediaItem, MoneyResponse } from "@/types/common";
 
 /*
- * DTO đơn hàng — theo khuôn `eco_backend` (OrderResponse, OrderItemResponse,
- * ReturnRequestResponse) rút gọn cho MỘT cửa hàng (không tách đơn con theo
- * gian hàng). Tiền là `MoneyResponse` server trả; FE không cộng trừ (Money Rule).
+ * DTO đơn hàng — theo khuôn `eco_backend` (OrderResponse, OrderGroupResponse, OrderItemResponse,
+ * ReturnRequestResponse), camelCase của NestJS → snake_case của FE qua `api/order-adapter.ts`.
+ * Tiền là `MoneyResponse` server trả; FE không cộng trừ (Money Rule).
+ *
+ * CHỢ NHIỀU GIAN HÀNG (PLAN-0014): một lần đặt hàng = MỘT đơn CHA (`OrderGroupResponse`, mã DHN…) gồm N đơn CON
+ * (`OrderResponse`, mã DH…, mỗi shop một đơn). Trạng thái, thanh toán, huỷ, trả hàng, đánh giá đều theo ĐƠN CON;
+ * đơn cha chỉ gộp địa chỉ + tổng tiền và KHÔNG có trạng thái riêng.
  */
-/* `card` = form thẻ mô phỏng (chế độ mẫu); `vnpay` = cổng thật, BE trả `payment_url` để chuyển hướng. */
-export type PaymentMethodCode = "cod" | "bank_transfer" | "card" | "vnpay";
+/* `card` = form thẻ mô phỏng (chế độ mẫu); `vnpay`/`payos` = cổng thật, BE trả `payment_url` để chuyển hướng. */
+export type PaymentMethodCode = "cod" | "bank_transfer" | "card" | "vnpay" | "payos";
 
 /* Trạng thái đơn — lưới chuyển ở server: pending → confirmed → packing → shipping → delivered → completed;
    pending → cancelled; delivered/completed → returned. */
 export type OrderStatus = "pending" | "confirmed" | "packing" | "shipping" | "delivered" | "completed" | "cancelled" | "returned";
 export type PaymentStatus = "unpaid" | "processing" | "paid" | "refunded" | "partially_refunded";
+
+/* OrderGroupResponse — đơn cha (đơn tổng hợp) chứa nhiều đơn con theo shop (PLAN-0014 bước 7). OrderGroup
+   KHÔNG có status/payment riêng — status/thanh toán sống ở từng đơn con (`orders[]`, đủ field như OrderResponse).
+   Được trả từ `GET /orders/groups` (danh sách) và `GET /orders/groups/{code}` (chi tiết), và từ `POST /orders`. */
+export interface OrderGroupResponse {
+  code: string; /* Mã đơn cha, tiền tố DHN */
+  recipient_name: string;
+  recipient_phone: string;
+  shipping_address: string;
+  subtotal: MoneyResponse;
+  shipping_fee: MoneyResponse;
+  discount: MoneyResponse;
+  total: MoneyResponse;
+  orders: OrderResponse[]; /* Các đơn con theo shop — đủ field để hiện/redirect thanh toán từng đơn */
+  created_at: string;
+}
 
 export interface CardInput {
   number: string;
@@ -22,13 +42,15 @@ export interface CardInput {
 }
 
 /* Lệnh đặt hàng chỉ gửi thứ CHỈ CLIENT biết: địa chỉ nào, trả bằng gì, ghi chú, mã giảm.
-   KHÔNG gửi tiền — backend (mock) tự tính lại từ giỏ. */
+   KHÔNG gửi tiền — backend (mock) tự tính lại từ giỏ. `voucher_codes`: tối đa 1 mã sàn + 1 mã cho mỗi shop trong giỏ. */
 export interface CreateOrderRequest {
   address_id: string;
   payment_method_code: PaymentMethodCode;
+  /* VNPay: VNBANK (ATM) · INTCARD (Visa/Master) · VNPAYQR — bỏ trống để khách chọn trên cổng. */
+  bank_code?: "VNBANK" | "INTCARD" | "VNPAYQR";
   card?: CardInput | null;
   note?: string;
-  voucher_code?: string | null;
+  voucher_codes?: string[];
 }
 
 export interface OrderItemResponse {
@@ -39,6 +61,7 @@ export interface OrderItemResponse {
   slug: string;
   name: string;
   image_url: string;
+  /* Ngành hàng động: server ghép tuỳ chọn vào đây ("Đen" / "128GB"), có thể rỗng — hiện bằng `nhanBienThe()`. */
   color: string;
   size: string;
   quantity: number;
@@ -53,17 +76,27 @@ export interface OrderHistoryResponse {
   note: string | null;
 }
 
+/* Thông tin chuyển khoản thủ công của MỘT đơn con (chỉ có khi đơn còn chờ trả và chưa quá hạn). */
 export interface BankTransferIntent {
   bank_code: string;
   account_number: string;
   account_name: string;
   transfer_content: string;
   qr_url: string | null;
+  /* Số tiền phải chuyển (VND, số nguyên dạng chuỗi) — số server. */
+  amount?: string;
+  /* Hạn chuyển khoản (ISO). */
+  expires_at?: string | null;
 }
 
 export interface OrderResponse {
   code: string;
   status: OrderStatus;
+  /* Nhãn trạng thái server viết sẵn ("Chờ xác nhận") — màn vẫn dùng `TRANG_THAI_DON` để mọi nơi nói cùng một chữ. */
+  status_label?: string;
+  /* Gian hàng của đơn NÀY (PLAN-0014 bước 7) — 1 đơn luôn thuộc đúng 1 shop, dù giỏ gốc có nhiều shop. */
+  shop_id: string;
+  shop_name: string;
   payment_method_code: PaymentMethodCode;
   payment_status: PaymentStatus;
   /* Thẻ: chỉ lưu thương hiệu + 4 số cuối (Payment Card Data Rule). */
@@ -77,13 +110,21 @@ export interface OrderResponse {
   items: OrderItemResponse[];
   subtotal: MoneyResponse;
   shipping_fee: MoneyResponse;
+  /* Tổng giảm của đơn con này = giảm do shop chịu + phần mã sàn phân bổ vào đơn này. */
   discount: MoneyResponse;
+  /* Mã SÀN đã dùng cho đơn (cả giỏ), mã GIAN HÀNG đã dùng riêng cho đơn con này. */
   promotion: { code: string; name: string | null } | null;
+  shop_promotion?: { code: string; name: string | null } | null;
+  shop_discount?: MoneyResponse;
+  platform_discount?: MoneyResponse;
   total: MoneyResponse;
   payment_intent: BankTransferIntent | null;
-  /* VNPay: URL cổng để chuyển hướng ngay sau khi đặt (chỉ chế độ thật). */
+  /* VNPay/PayOS: link thanh toán — chỉ có khi giao dịch còn chờ và chưa quá hạn (hết hạn → `retryPayment`). */
   payment_url?: string | null;
+  /* Hạn thanh toán của đơn (ISO) — VNPay/PayOS 30 phút, chuyển khoản tay theo cài đặt; COD không có. */
+  payment_expires_at?: string | null;
   tracking_url: string | null;
+  cancel_reason?: string | null;
   history: OrderHistoryResponse[];
   created_at: string;
   /* Server quyết định nút Huỷ / Trả hàng (mock: suy từ status). */
@@ -91,16 +132,46 @@ export interface OrderResponse {
   can_return?: boolean;
 }
 
-/* Bảng tiền của bước đặt hàng — cùng công thức với POST /orders (mock cũng vậy). */
+/* Một gói hàng (1 shop) sẽ tách thành một đơn con khi đặt hàng. Mọi số là số server — kể cả giảm giá đã phân bổ. */
+export interface CheckoutShopGroup {
+  shop_id: string;
+  shop_name: string;
+  item_count: number;
+  subtotal: MoneyResponse;
+  shipping_fee: MoneyResponse;
+  /* Giảm của đơn con này (mã shop + phần mã sàn phân bổ). */
+  discount: MoneyResponse;
+  /* Khách phải trả cho đơn con này. */
+  total: MoneyResponse;
+}
+
+/* Từng mã khách đã chọn: server nhận hay từ chối (kèm lý do tiếng Việt) và số giảm THỰC áp. */
+export interface CheckoutVoucher {
+  code: string;
+  scope: "platform" | "shop";
+  shop_id: string | null;
+  shop_name: string | null;
+  ok: boolean;
+  error: string | null;
+  discount: MoneyResponse;
+}
+
+/* Bảng tiền của bước đặt hàng — cùng công thức với POST /orders (mock cũng vậy). Chỉ tính các dòng giỏ ĐÃ TICK. */
 export interface CheckoutSummaryResponse {
   subtotal: MoneyResponse;
   shipping_fee: MoneyResponse;
   discount: MoneyResponse;
   total: MoneyResponse;
   promotion_code: string | null;
-  /* Mã khách gõ bị từ chối — lý do để hiện dưới ô nhập. */
+  /* Lý do của mã bị từ chối ĐẦU TIÊN (giữ cho nơi chỉ có một ô nhập); chi tiết từng mã ở `vouchers`. */
   promotion_error: string | null;
   item_count: number;
+  province_name: string | null;
+  /* Cảnh báo dòng giỏ (hết hàng, ngừng bán) — còn cảnh báo thì `POST /orders` trả 409 ORDER_CART_CHANGED. */
+  warnings: string[];
+  vouchers: CheckoutVoucher[];
+  /* Giỏ có hàng từ nhiều shop → đặt hàng sẽ tạo nhiều đơn con, phí ship tính riêng từng gói. */
+  shop_groups: CheckoutShopGroup[];
 }
 
 export type ReturnStatus = "requested" | "approved" | "rejected" | "refunded";
@@ -131,4 +202,7 @@ export interface MyReviewResponse {
   /* Có khi đánh giá từ đơn (biết màu/size); đánh giá từ trang sản phẩm thì null. */
   variant_label: string | null;
   created_at: string;
+  /* Phản hồi của GIAN HÀNG cho đánh giá này (`shop_name` = tên shop trả lời). BE `GET /reviews/me` hiện CHƯA trả field này
+     (chỉ `GET /products/{slug}/reviews` có `reply`) — màn "Đánh giá của tôi" đã sẵn sàng hiện khi BE bổ sung. */
+  reply?: { shop_name: string; content: string; created_at: string } | null;
 }

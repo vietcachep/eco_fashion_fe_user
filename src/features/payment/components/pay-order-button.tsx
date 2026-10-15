@@ -12,7 +12,7 @@ import { hasLivePaymentLink, usePayOrder, type PayableOrder } from "@/features/p
 export function PayOrderButton({ order, noiBat = true, className }: { order: PayableOrder; noiBat?: boolean; className?: string }) {
   const pay = usePayOrder();
   const conHan = hasLivePaymentLink(order);
-  const cong = order.payment_method_code === "payos" ? "PayOS" : "VNPay";
+  const cong = "PayOS";
   return (
     <div className={cn("d-flex flex-column align-items-start gap-6", className)}>
       <button type="button" className={cn("tf-btn animate-btn btn-small", !noiBat && "btn-out-line-dark")} disabled={pay.isPending} onClick={() => pay.mutate(order)}>

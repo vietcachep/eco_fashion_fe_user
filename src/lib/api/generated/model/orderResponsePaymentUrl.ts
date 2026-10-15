@@ -7,7 +7,7 @@
  */
 
 /**
- * VNPay: URL chuyển hướng để thanh toán
+ * PayOS: URL chuyển hướng để thanh toán
  * @nullable
  */
 export type OrderResponsePaymentUrl = { [key: string]: unknown } | null;

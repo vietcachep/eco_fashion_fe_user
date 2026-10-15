@@ -1,4 +1,4 @@
-import type { OrderResponse, OrderStatus, PaymentMethodCode, PaymentStatus, ReturnStatus } from "@/features/order/types";
+import type { OrderResponse, OrderStatus, OrderPaymentMethodCode, PaymentStatus, ReturnStatus } from "@/features/order/types";
 
 /*
  * Nhãn + luật hiển thị theo trạng thái đơn. Nhãn ở đây (không ở component)
@@ -47,13 +47,15 @@ export const TRANG_THAI_THANH_TOAN: Record<PaymentStatus, string> = {
   partially_refunded: "Đã hoàn một phần",
 };
 
-export const TEN_PHUONG_THUC: Record<PaymentMethodCode, string> = {
-  cod: "Thanh toán khi nhận hàng",
-  bank_transfer: "Chuyển khoản ngân hàng",
-  card: "Thẻ quốc tế",
-  vnpay: "Thẻ / QR qua VNPay",
-  payos: "Quét mã QR qua PayOS",
+/* Có cả mã đơn CŨ (vnpay / chuyển khoản tay / thẻ) để đơn lịch sử vẫn hiện tên dễ hiểu; mã lạ → nhãn chung. */
+export const TEN_PHUONG_THUC: Record<OrderPaymentMethodCode, string> = {
+  cod: "Thanh toán khi nhận hàng (COD)",
+  payos: "Thanh toán trực tuyến (QR qua PayOS)",
+  vnpay: "Thanh toán trực tuyến",
+  bank_transfer: "Chuyển khoản",
+  card: "Thanh toán trực tuyến",
 };
+export const tenPhuongThuc = (code: string): string => (TEN_PHUONG_THUC as Record<string, string>)[code] ?? "Thanh toán trực tuyến";
 
 export const TRANG_THAI_TRA: Record<ReturnStatus, string> = {
   requested: "Chờ duyệt",

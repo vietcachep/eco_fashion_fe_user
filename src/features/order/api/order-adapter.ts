@@ -3,12 +3,12 @@ import type {
 } from "@/lib/api/generated/model";
 import type { MediaItem } from "@/types/common";
 import type {
-  CheckoutSummaryResponse, MyReviewResponse, OrderGroupResponse, OrderItemResponse, OrderResponse, OrderStatus, PaymentMethodCode, PaymentStatus, ReturnRequestResponse, ReturnStatus,
+  CheckoutSummaryResponse, MyReviewResponse, OrderGroupResponse, OrderItemResponse, OrderResponse, OrderStatus, OrderPaymentMethodCode, PaymentStatus, ReturnRequestResponse, ReturnStatus,
 } from "@/features/order/types";
 
 /*
  * ADAPTER order: DTO camelCase của NestJS → snake_case của FE (PLAN-0006). Tiền giữ nguyên `MoneyResponse`
- * server trả (Money Rule). BE không có `card_last4` (không lưu số thẻ) → null.
+ * server trả (Money Rule).
  * Swagger khai mọi trường `nullable` không kèm `type` nên Orval sinh chúng thành `{[key]: unknown} | null` —
  * đọc qua `chuoi`/`maKhuyenMai` thay vì ép kiểu rải rác (điểm ép kiểu DUY NHẤT của feature này).
  */
@@ -22,16 +22,15 @@ function maKhuyenMai(v: unknown): { code: string; name: string | null } | null {
 }
 
 export function chuanHoaDon(b: BeOrder): OrderResponse {
-  const intent = b.paymentIntent ?? null;
   return {
     code: b.code,
     status: b.status as OrderStatus,
     status_label: b.statusLabel,
     shop_id: b.shopId,
     shop_name: b.shopName,
-    payment_method_code: b.paymentMethodCode as PaymentMethodCode,
+    payment_method_code: b.paymentMethodCode as OrderPaymentMethodCode,
     payment_status: b.paymentStatus as PaymentStatus,
-    card_brand: chuoi(b.cardBrand), card_last4: null, transaction_code: chuoi(b.transactionCode),
+    transaction_code: chuoi(b.transactionCode),
     recipient_name: b.recipientName, recipient_phone: b.recipientPhone, shipping_address: b.shippingAddress, customer_note: chuoi(b.customerNote),
     items: (b.items ?? []).map<OrderItemResponse>((i) => ({
       id: i.id, variant_id: i.variantId, product_id: i.productId, slug: i.slug, name: i.name, image_url: chuoi(i.imageUrl) ?? "", color: i.color ?? "", size: i.size ?? "",
@@ -42,9 +41,6 @@ export function chuanHoaDon(b: BeOrder): OrderResponse {
     shop_promotion: maKhuyenMai(b.shopPromotion),
     shop_discount: b.shopDiscount, platform_discount: b.platformDiscount,
     total: b.total,
-    payment_intent: intent
-      ? { bank_code: intent.bankCode, account_number: intent.accountNumber, account_name: intent.accountName, transfer_content: intent.transferContent, qr_url: chuoi(intent.qrUrl), amount: intent.amount, expires_at: chuoi(intent.expiresAt) }
-      : null,
     payment_url: chuoi(b.paymentUrl),
     payment_expires_at: chuoi(b.paymentExpiresAt),
     tracking_url: chuoi(b.trackingUrl),

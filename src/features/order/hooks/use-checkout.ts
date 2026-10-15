@@ -54,7 +54,7 @@ export function usePlaceOrder() {
   const khoa = useRef<{ dauVan: string; key: string } | null>(null);
   return useMutation({
     mutationFn: (body: CreateOrderRequest) => {
-      const dauVan = JSON.stringify([body.address_id, body.payment_method_code, body.bank_code ?? "", body.note?.trim() ?? "", [...(body.voucher_codes ?? [])].sort()]);
+      const dauVan = JSON.stringify([body.address_id, body.payment_method_code, body.note?.trim() ?? "", [...(body.voucher_codes ?? [])].sort()]);
       if (khoa.current?.dauVan !== dauVan) khoa.current = { dauVan, key: taoKhoa() };
       return createOrder(body, khoa.current.key);
     },

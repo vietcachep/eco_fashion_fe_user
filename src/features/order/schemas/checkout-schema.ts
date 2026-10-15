@@ -24,7 +24,7 @@ export type AddressInput = z.infer<typeof addressSchema>;
  * giảm giá chọn từ bảng mã — nên không có ô nhập tay nào khác. `paymentMethod` là mã phương thức BE nhận ở `POST /orders`;
  * danh sách thực sự bật do `GET /payment-methods` quyết (màn chỉ vẽ cái server trả).
  */
-export const PAYMENT_METHOD_CODES = ["cod", "bank_transfer", "card", "vnpay", "payos"] as const;
+export const PAYMENT_METHOD_CODES = ["cod", "payos"] as const;
 
 export const checkoutSchema = z.object({
   note: z.string().trim().max(500, "Ghi chú tối đa 500 ký tự"),

@@ -7,15 +7,12 @@
  */
 
 /**
- * `card` = VNPay thẻ quốc tế
+ * `cod` | `payos`
  */
 export type CreateOrderRequestPaymentMethodCode = typeof CreateOrderRequestPaymentMethodCode[keyof typeof CreateOrderRequestPaymentMethodCode];
 
 
 export const CreateOrderRequestPaymentMethodCode = {
   cod: 'cod',
-  bank_transfer: 'bank_transfer',
-  vnpay: 'vnpay',
   payos: 'payos',
-  card: 'card',
 } as const;

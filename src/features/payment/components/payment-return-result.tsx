@@ -9,7 +9,7 @@ import { canPayOnline } from "@/features/payment/hooks/use-pay-order";
 import { useOrderGroup } from "@/features/order/hooks/use-orders";
 
 /*
- * Màn kết quả CHUNG cho hai trang cổng thanh toán đưa khách quay về (PayOS, VNPay) — một chỗ, một cách nói.
+ * Màn kết quả CHUNG cho trang cổng thanh toán (PayOS) đưa khách quay về — một chỗ, một cách nói.
  * Bốn trạng thái: đang xác nhận (hỏi BE) · thành công · đang xử lý (cổng chưa báo xong — cho "Kiểm tra lại") · thất bại /
  * huỷ / hết hạn. Chữ giải thích là `message` BE trả (tiếng Việt, đã đúng ngữ cảnh) — màn chỉ chọn tiêu đề + màu.
  *

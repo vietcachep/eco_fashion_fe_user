@@ -9,7 +9,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ROUTES } from "@/lib/constants";
 import { CHE_DO_MOCK } from "@/lib/api-mode";
 import { formatMoney } from "@/lib/format";
-import { parseExpiry } from "@/lib/card";
 import { cn } from "@/lib/utils";
 import { useStoreHydrated } from "@/lib/hooks/use-store-hydrated";
 import { FieldMessage } from "@/components/shared/field-message";
@@ -18,7 +17,6 @@ import { MockBadge } from "@/components/shared/mock-badge";
 import { ServerMoney } from "@/components/shared/server-money";
 import { AddressForm, DIA_CHI_TRONG } from "@/features/identity/components/account/address-book";
 import { PaymentMethodList } from "@/features/payment/components/payment-method-list";
-import { useCardForm } from "@/features/payment/hooks/use-card-form";
 import { usePaymentMethods } from "@/features/payment/hooks/use-payment-methods";
 import { VoucherPicker } from "@/features/promotion/components/vouchers/voucher-picker";
 import { VoucherResults } from "@/features/promotion/components/vouchers/voucher-results";
@@ -111,8 +109,6 @@ function CheckoutBody({ onDaDat }: { onDaDat: (thongBao: string) => void }) {
   const { data: phuongThuc } = usePaymentMethods();
   /* Phương thức đang chọn mà server không còn bật (vd COD bị tắt) → lùi về cái đầu tiên của danh sách. */
   const paymentCode: PaymentMethodCode = phuongThuc?.length && !phuongThuc.some((m) => m.code === phuongThucChon) ? phuongThuc[0].code : phuongThucChon;
-  /* Form thẻ sống ở đây vì nút "Đặt hàng" nằm ở cột tổng kết bên kia màn hình (chỉ chế độ mẫu — có backend thẻ đi qua VNPay). */
-  const cardForm = useCardForm();
   const placeOrder = usePlaceOrder();
 
   const address = addresses.find((a) => a.id === addressId) ?? macDinh;
@@ -129,19 +125,10 @@ function CheckoutBody({ onDaDat }: { onDaDat: (thongBao: string) => void }) {
     if (!address) { setLoi({ message: "Chọn địa chỉ nhận hàng trước đã.", goiY: null }); return; }
     if (!summary) return;
     setLoi(null);
-    /* Trả bằng thẻ thì validate form thẻ TRƯỚC: sai chỗ nào hiện lỗi ngay dưới ô đó. */
-    if (paymentCode === "card" && !(await cardForm.trigger())) return;
-    const card = cardForm.getValues();
-    const expiry = parseExpiry(card.expiry);
-
     placeOrder.mutate(
       {
         address_id: address.id,
         payment_method_code: paymentCode,
-        /* Số thẻ (chế độ mẫu) đi THẲNG vào lời gọi này rồi biến mất cùng nó — không store, không log. Có backend: không bao giờ gửi. */
-        card: paymentCode === "card" && expiry
-          ? { number: card.card_number.replace(/\s+/g, ""), holder: card.holder_name, exp_month: expiry.exp_month, exp_year: expiry.exp_year, cvv: card.cvv }
-          : undefined,
         note: values.note || undefined,
         /* Chỉ gửi các mã bảng tiền ĐÃ NHẬN — mã bị từ chối thì BE huỷ cả đơn (400 ORDER_PROMOTION_INVALID); khách đã thấy chúng "không áp dụng". */
         voucher_codes: summary.vouchers.filter((v) => v.ok).map((v) => v.code),
@@ -259,7 +246,7 @@ function CheckoutBody({ onDaDat }: { onDaDat: (thongBao: string) => void }) {
                   <div className="text-xl fw-medium mb_4">Phương thức thanh toán</div>
                   <p className="text-sm text-main">Mọi giao dịch đều được mã hoá và bảo mật.</p>
                 </div>
-                <PaymentMethodList value={paymentCode} onSelect={(code) => form.setValue("paymentMethod", code, { shouldValidate: true })} cardForm={cardForm} soDon={soDonCon} />
+                <PaymentMethodList value={paymentCode} onSelect={(code) => form.setValue("paymentMethod", code, { shouldValidate: true })} soDon={soDonCon} />
               </div>
             </div>
           </div>
@@ -323,8 +310,6 @@ function CheckoutBody({ onDaDat }: { onDaDat: (thongBao: string) => void }) {
                 </div>
                 {soDonCon > 1 && summary && <p className="text-xs text-main mt_12">Bạn sẽ nhận {soDonCon} đơn hàng, tổng thanh toán {formatMoney(summary.total)}.</p>}
                 <p className="text-xs text-main mt_12">Bấm đặt hàng là bạn đồng ý với <Link href={ROUTES.terms} className="link text-decoration-underline">điều khoản mua bán</Link> của FITLY.</p>
-                {/* Cổng thanh toán là SANDBOX — nói thẳng, đừng để ai nhập thẻ thật. */}
-                {paymentCode === "card" && <p className="text-xs fw-medium text-primary mt_8">Đây là cổng thanh toán MÔ PHỎNG — đừng nhập số thẻ thật.</p>}
               </div>
             </div>
           </div>

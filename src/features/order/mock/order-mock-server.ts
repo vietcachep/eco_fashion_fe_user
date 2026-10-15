@@ -1,4 +1,3 @@
-import { detectCardBrand } from "@/lib/card";
 import { useCartStore, chonTamTinh } from "@/stores/cart-store";
 import { useAddressStore } from "@/stores/address-store";
 import { useAuthStore } from "@/stores/auth-store";
@@ -120,14 +119,6 @@ export async function mockCreateOrder(body: CreateOrderRequest): Promise<OrderGr
   const tt = tinhTien(body.voucher_codes?.[0]);
   if (tt.promotion_error) throw new Error(tt.promotion_error);
 
-  /* Cổng thẻ mô phỏng: 4000 0000 0000 0002 bị từ chối, ...0069 hết hạn (như eco_frontend_user). */
-  let card_brand: string | null = null; let card_last4: string | null = null; let transaction_code: string | null = null;
-  if (body.payment_method_code === "card") {
-    const so = (body.card?.number ?? "").replace(/\s+/g, "");
-    if (so.endsWith("0002")) throw new Error("Thẻ bị từ chối (PAYMENT_DECLINED) — thử thẻ khác");
-    if (so.endsWith("0069")) throw new Error("Thẻ đã hết hạn (PAYMENT_CARD_EXPIRED)");
-    card_brand = detectCardBrand(so); card_last4 = so.slice(-4); transaction_code = `TXN-${Date.now().toString(36).toUpperCase().slice(-6)}`;
-  }
   const now = new Date().toISOString();
   const rule = tt.promotion_code ? timMa(tt.promotion_code) : undefined;
   const shippingAddress = `${diaChi.street}, ${diaChi.ward}, ${diaChi.district}, ${diaChi.province}`;
@@ -146,8 +137,8 @@ export async function mockCreateOrder(body: CreateOrderRequest): Promise<OrderGr
     const code = sinhMa();
     const don: OrderResponse = {
       code, status: "pending", shop_id: g.shop_id, shop_name: g.shop_name, payment_method_code: body.payment_method_code,
-      payment_status: body.payment_method_code === "card" ? "paid" : "unpaid",
-      card_brand, card_last4, transaction_code,
+      payment_status: "unpaid",
+      transaction_code: null,
       recipient_name: diaChi.fullName, recipient_phone: diaChi.phone, shipping_address: shippingAddress,
       customer_note: body.note?.trim() || null,
       items: lines.filter((l) => (l.shopSlug ?? "_khac") === g.shop_id).map((l) => ({
@@ -156,9 +147,6 @@ export async function mockCreateOrder(body: CreateOrderRequest): Promise<OrderGr
       })),
       subtotal: tien(groupSubtotal), shipping_fee: tien(shipFee), discount: tien(discount),
       promotion: rule ? { code: rule.code, name: rule.name } : null, total: tien(total),
-      payment_intent: body.payment_method_code === "bank_transfer"
-        ? { bank_code: "Vietcombank", account_number: "0123456789", account_name: "CONG TY FITLY", transfer_content: `FITLY ${code}`, qr_url: null }
-        : null,
       tracking_url: null,
       history: [{ to_status: "pending", created_at: now, note: null }],
       created_at: now,

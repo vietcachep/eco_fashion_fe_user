@@ -5,7 +5,6 @@ import Link from "next/link";
 import { ROUTES } from "@/lib/constants";
 import { formatMoney } from "@/lib/format";
 import { CHE_DO_MOCK } from "@/lib/api-mode";
-import { BankTransferPanel } from "@/features/payment/components/bank-transfer-panel";
 import { PayOrderButton } from "@/features/payment/components/pay-order-button";
 import { canPayOnline } from "@/features/payment/hooks/use-pay-order";
 import { canCancelOrder, canReturnOrder, canReviewOrder } from "@/features/order/hooks/order-status";
@@ -42,7 +41,6 @@ export function SubOrderCard({ order, stt, panel, moHanhTrinh = false }: { order
   const canConfirm = CHE_DO_MOCK && order.status === "delivered";
   const moBangHuy = bang === "cancel" && canCancel;
   const moBangTra = bang === "return" && canReturn;
-  const choChuyenKhoan = order.payment_method_code === "bank_transfer" && order.payment_intent && order.payment_status !== "paid" && order.status !== "cancelled";
 
   /* Giảm giá: có backend thì tách phần shop chịu / sàn chịu (đều là số server); chế độ mẫu chỉ có tổng. */
   const giamShop = Number(order.shop_discount?.amount ?? 0) > 0;
@@ -72,7 +70,6 @@ export function SubOrderCard({ order, stt, panel, moHanhTrinh = false }: { order
           </div>
         </div>
       )}
-      {choChuyenKhoan && order.payment_intent && <div className="order-card-body pb-0"><BankTransferPanel intent={order.payment_intent} /></div>}
 
       <ul className="order-items">
         {order.items.map((i) => {

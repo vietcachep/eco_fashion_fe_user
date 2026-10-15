@@ -21,7 +21,7 @@ export { phiVanChuyen, SU_KIEN_DANH_GIA, type CreateReviewRequest };
  *  - CHE_DO_MOCK: uỷ quyền cho "máy chủ mẫu" `mock/order-mock-server.ts` (localStorage, gắn nhãn).
  *  - Có backend: NestJS `/checkout/summary`, `/orders`, `/orders/groups`, `/returns`, `/reviews/me`, `/products/{slug}/reviews`;
  *    adapter `order-adapter` đổi camelCase → DTO FE. Chữ ký giữ nên hook + màn hình không đổi.
- * Tiền do server tính; FE không cộng trừ. Số thẻ KHÔNG bao giờ gửi lên (VNPay redirect).
+ * Tiền do server tính; FE không cộng trừ. Số thẻ KHÔNG bao giờ gửi lên.
  *
  * ĐƠN CHA vs ĐƠN CON (PLAN-0014): `POST /orders`, `GET /orders/groups[/{mãCha}]` trả ĐƠN CHA (`OrderGroupResponse`, DHN…) chứa
  * `orders[]` đơn con; còn `GET /orders[/{mãCon}]`, huỷ, trả hàng, đánh giá, thanh toán lại làm việc theo mã ĐƠN CON (DH…).
@@ -53,8 +53,7 @@ export async function getCheckoutSummary(addressId: string | null | undefined, v
 }
 
 /*
- * Đặt hàng → ĐƠN CHA kèm đơn con theo shop (giỏ một shop vẫn trả đúng dạng này: nhóm 1 đơn). Mỗi đơn con có `payment_url` /
- * `payment_intent` riêng. Idempotency-Key: bấm "Đặt hàng" hai lần (mạng chậm) chỉ tạo MỘT đơn — cùng khoá + cùng nội dung thì BE trả
+ * Đặt hàng → ĐƠN CHA kèm đơn con theo shop (giỏ một shop vẫn trả đúng dạng này: nhóm 1 đơn). Mỗi đơn con có `payment_url` riêng. Idempotency-Key: bấm "Đặt hàng" hai lần (mạng chậm) chỉ tạo MỘT đơn — cùng khoá + cùng nội dung thì BE trả
  * lại đúng đơn cũ; cùng khoá khác nội dung → 409 COMMON_IDEMPOTENCY_KEY_REUSED (khoá do `usePlaceOrder` quản).
  */
 export async function createOrder(body: CreateOrderRequest, idempotencyKey?: string): Promise<OrderGroupResponse> {
@@ -62,7 +61,7 @@ export async function createOrder(body: CreateOrderRequest, idempotencyKey?: str
   const d = await goi<BeGroup>(
     api.post(
       `${API_PREFIX}/orders`,
-      { addressId: body.address_id, paymentMethodCode: body.payment_method_code, bankCode: body.bank_code, note: body.note?.trim() || undefined, voucherCodes: body.voucher_codes?.length ? body.voucher_codes : undefined },
+      { addressId: body.address_id, paymentMethodCode: body.payment_method_code, note: body.note?.trim() || undefined, voucherCodes: body.voucher_codes?.length ? body.voucher_codes : undefined },
       { headers: idempotencyKey ? { "Idempotency-Key": idempotencyKey } : undefined },
     ),
     "orders.create",
@@ -109,7 +108,7 @@ async function timNhomCuaDonCon(maCon: string): Promise<OrderGroupResponse | nul
 }
 
 /*
- * Một ĐƠN CHA kèm đơn con. Nhận cả mã đơn CON (DH…): cổng VNPay/PayOS chỉ báo mã đơn con khi đưa khách quay lại, màn
+ * Một ĐƠN CHA kèm đơn con. Nhận cả mã đơn CON (DH…): cổng PayOS chỉ báo mã đơn con khi đưa khách quay lại, màn
  * "đặt thành công" vẫn phải liệt kê cả các đơn còn lại của nhóm để khách trả tiếp — hàm tự tìm ra nhóm chứa nó.
  */
 export async function getOrderGroup(code: string): Promise<OrderGroupResponse | null> {

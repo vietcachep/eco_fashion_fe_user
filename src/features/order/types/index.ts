@@ -9,8 +9,10 @@ import type { MediaItem, MoneyResponse } from "@/types/common";
  * (`OrderResponse`, mã DH…, mỗi shop một đơn). Trạng thái, thanh toán, huỷ, trả hàng, đánh giá đều theo ĐƠN CON;
  * đơn cha chỉ gộp địa chỉ + tổng tiền và KHÔNG có trạng thái riêng.
  */
-/* `card` = form thẻ mô phỏng (chế độ mẫu); `vnpay`/`payos` = cổng thật, BE trả `payment_url` để chuyển hướng. */
-export type PaymentMethodCode = "cod" | "bank_transfer" | "card" | "vnpay" | "payos";
+/* PLAN-0018: shop chỉ nhận `cod` và `payos` (PayOS = cổng thật, BE trả `payment_url` để chuyển hướng). */
+export type PaymentMethodCode = "cod" | "payos";
+/* Đơn CŨ có thể còn mã đã bỏ (vnpay, chuyển khoản tay, thẻ mẫu) — chỉ để HIỂN THỊ, không bao giờ gửi lên khi đặt hàng. */
+export type OrderPaymentMethodCode = PaymentMethodCode | "vnpay" | "bank_transfer" | "card";
 
 /* Trạng thái đơn — lưới chuyển ở server: pending → confirmed → packing → shipping → delivered → completed;
    pending → cancelled; delivered/completed → returned. */
@@ -33,22 +35,11 @@ export interface OrderGroupResponse {
   created_at: string;
 }
 
-export interface CardInput {
-  number: string;
-  holder: string;
-  exp_month: number;
-  exp_year: number;
-  cvv: string;
-}
-
 /* Lệnh đặt hàng chỉ gửi thứ CHỈ CLIENT biết: địa chỉ nào, trả bằng gì, ghi chú, mã giảm.
    KHÔNG gửi tiền — backend (mock) tự tính lại từ giỏ. `voucher_codes`: tối đa 1 mã sàn + 1 mã cho mỗi shop trong giỏ. */
 export interface CreateOrderRequest {
   address_id: string;
   payment_method_code: PaymentMethodCode;
-  /* VNPay: VNBANK (ATM) · INTCARD (Visa/Master) · VNPAYQR — bỏ trống để khách chọn trên cổng. */
-  bank_code?: "VNBANK" | "INTCARD" | "VNPAYQR";
-  card?: CardInput | null;
   note?: string;
   voucher_codes?: string[];
 }
@@ -76,19 +67,6 @@ export interface OrderHistoryResponse {
   note: string | null;
 }
 
-/* Thông tin chuyển khoản thủ công của MỘT đơn con (chỉ có khi đơn còn chờ trả và chưa quá hạn). */
-export interface BankTransferIntent {
-  bank_code: string;
-  account_number: string;
-  account_name: string;
-  transfer_content: string;
-  qr_url: string | null;
-  /* Số tiền phải chuyển (VND, số nguyên dạng chuỗi) — số server. */
-  amount?: string;
-  /* Hạn chuyển khoản (ISO). */
-  expires_at?: string | null;
-}
-
 export interface OrderResponse {
   code: string;
   status: OrderStatus;
@@ -97,11 +75,8 @@ export interface OrderResponse {
   /* Gian hàng của đơn NÀY (PLAN-0014 bước 7) — 1 đơn luôn thuộc đúng 1 shop, dù giỏ gốc có nhiều shop. */
   shop_id: string;
   shop_name: string;
-  payment_method_code: PaymentMethodCode;
+  payment_method_code: OrderPaymentMethodCode;
   payment_status: PaymentStatus;
-  /* Thẻ: chỉ lưu thương hiệu + 4 số cuối (Payment Card Data Rule). */
-  card_brand: string | null;
-  card_last4: string | null;
   transaction_code: string | null;
   recipient_name: string;
   recipient_phone: string;
@@ -118,10 +93,9 @@ export interface OrderResponse {
   shop_discount?: MoneyResponse;
   platform_discount?: MoneyResponse;
   total: MoneyResponse;
-  payment_intent: BankTransferIntent | null;
-  /* VNPay/PayOS: link thanh toán — chỉ có khi giao dịch còn chờ và chưa quá hạn (hết hạn → `retryPayment`). */
+  /* PayOS: link thanh toán — chỉ có khi giao dịch còn chờ và chưa quá hạn (hết hạn → `retryPayment`). */
   payment_url?: string | null;
-  /* Hạn thanh toán của đơn (ISO) — VNPay/PayOS 30 phút, chuyển khoản tay theo cài đặt; COD không có. */
+  /* Hạn thanh toán của đơn (ISO) — PayOS 30 phút; COD không có. */
   payment_expires_at?: string | null;
   tracking_url: string | null;
   cancel_reason?: string | null;

@@ -14,10 +14,8 @@ export interface CreateOrderRequest {
   addressId?: string;
   /** Hoặc nhập tay */
   address?: CheckoutAddressInput;
-  /** `card` = VNPay thẻ quốc tế */
+  /** `cod` | `payos` */
   paymentMethodCode: CreateOrderRequestPaymentMethodCode;
-  /** VNPay: VNBANK (ATM) · INTCARD (Visa/Master) · VNPAYQR */
-  bankCode?: string;
   note?: string;
   /** @nullable */
   voucherCode?: CreateOrderRequestVoucherCode;

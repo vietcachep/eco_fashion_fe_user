@@ -151,7 +151,7 @@ export function useOrderControllerSummary<TData = Awaited<ReturnType<typeof orde
 
 
 /**
- * @summary Đặt hàng từ giỏ (dòng đã tick) — trả đơn CHA kèm đơn con theo shop (PLAN-0014 bước 7). Không gửi tiền; không gửi số thẻ (card → VNPay redirect)
+ * @summary Đặt hàng từ giỏ (dòng đã tick) — trả đơn CHA kèm đơn con theo shop (PLAN-0014 bước 7). Không gửi tiền; không gửi số thẻ
  */
 export const orderControllerPlace = (
     createOrderRequest: CreateOrderRequest,
@@ -224,7 +224,7 @@ export function useOrderControllerPlace<TData = Awaited<ReturnType<typeof orderC
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Đặt hàng từ giỏ (dòng đã tick) — trả đơn CHA kèm đơn con theo shop (PLAN-0014 bước 7). Không gửi tiền; không gửi số thẻ (card → VNPay redirect)
+ * @summary Đặt hàng từ giỏ (dòng đã tick) — trả đơn CHA kèm đơn con theo shop (PLAN-0014 bước 7). Không gửi tiền; không gửi số thẻ
  */
 
 export function useOrderControllerPlace<TData = Awaited<ReturnType<typeof orderControllerPlace>>, TError = unknown>(

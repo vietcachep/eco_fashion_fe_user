@@ -31,12 +31,12 @@ function donMau(code: string, status: OrderStatus, ngayTao: number, items: Retur
   const ship = subtotal >= 500_000 ? 0 : 30_000;
   const discount = Number(opts.discount?.amount ?? 0);
   return {
-    code, status, shop_id: "shop-1", shop_name: "FITLY Official", payment_method_code: "cod", payment_status: "unpaid", card_brand: null, card_last4: null, transaction_code: null,
+    code, status, shop_id: "shop-1", shop_name: "FITLY Official", payment_method_code: "cod", payment_status: "unpaid", transaction_code: null,
     recipient_name: "Nguyễn Văn An", recipient_phone: "0912000001",
     shipping_address: "12 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh",
     customer_note: null, items,
     subtotal: tien(subtotal), shipping_fee: tien(ship), discount: tien(discount), promotion: null,
-    total: tien(subtotal + ship - discount), payment_intent: null, tracking_url: null,
+    total: tien(subtotal + ship - discount), tracking_url: null,
     history: opts.moc.map(([to, truoc]) => ({ to_status: to, created_at: NGAY(truoc, 10), note: null })),
     created_at: NGAY(ngayTao),
     ...opts,
@@ -49,12 +49,11 @@ export const DON_MAU: OrderResponse[] = [
     promotion: { code: "FITLYNEW", name: "Chào khách mới" }, discount: tien(15_000),
   }),
   donMau("DH2609081102", "shipping", 7, [dong("dam-suong-nu-basic", 1, "M", 1)], {
-    payment_method_code: "bank_transfer", payment_status: "paid", tracking_url: "https://tracking.ghn.vn/?order_code=GHN2609081102",
+    payment_method_code: "cod", payment_status: "paid", tracking_url: "https://tracking.ghn.vn/?order_code=GHN2609081102",
     moc: [["pending", 7], ["confirmed", 7], ["packing", 6], ["shipping", 5]],
-    payment_intent: { bank_code: "Vietcombank", account_number: "0123456789", account_name: "CONG TY FITLY", transfer_content: "FITLY DH2609081102", qr_url: null },
   }),
   donMau("DH2609121503", "delivered", 3, [dong("ao-so-mi-nu-tay-phong", 0, "S", 1), dong("chan-vay-xep-ly", 0, "S", 1)], {
-    payment_method_code: "card", payment_status: "paid", card_brand: "visa", card_last4: "4242", transaction_code: "TXN-7F3A9C",
+    payment_method_code: "payos", payment_status: "paid", transaction_code: "TXN-7F3A9C",
     moc: [["pending", 3], ["confirmed", 3], ["packing", 2], ["shipping", 2], ["delivered", 1]],
   }),
   donMau("DH2609141604", "pending", 1, [dong("ao-khoac-bomber-nam", 0, "L", 1)], {
@@ -105,13 +104,13 @@ export const DON_NHOM_MAU: OrderGroupResponse[] = [
   ]),
   nhomMau("DHN2609081102", [
     donMau("DH2609081102", "shipping", 7, [dong("dam-suong-nu-basic", 1, "M", 1)], {
-      shop_id: "shop-1", shop_name: "FITLY Official", payment_method_code: "bank_transfer", payment_status: "paid", tracking_url: "https://tracking.ghn.vn/?order_code=GHN2609081102",
+      shop_id: "shop-1", shop_name: "FITLY Official", payment_method_code: "cod", payment_status: "paid", tracking_url: "https://tracking.ghn.vn/?order_code=GHN2609081102",
       moc: [["pending", 7], ["confirmed", 7], ["packing", 6], ["shipping", 5]],
     }),
   ]),
   nhomMau("DHN2609121503", [
     donMau("DH2609121503", "delivered", 3, [dong("ao-so-mi-nu-tay-phong", 0, "S", 1), dong("chan-vay-xep-ly", 0, "S", 1)], {
-      shop_id: "shop-1", shop_name: "FITLY Official", payment_method_code: "card", payment_status: "paid", card_brand: "visa", card_last4: "4242", transaction_code: "TXN-7F3A9C",
+      shop_id: "shop-1", shop_name: "FITLY Official", payment_method_code: "payos", payment_status: "paid", transaction_code: "TXN-7F3A9C",
       moc: [["pending", 3], ["confirmed", 3], ["packing", 2], ["shipping", 2], ["delivered", 1]],
     }),
   ]),

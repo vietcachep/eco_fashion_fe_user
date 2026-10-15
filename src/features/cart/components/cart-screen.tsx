@@ -46,7 +46,7 @@ const CAM_KET = [
   { icon: "icon-return", title: "Đổi trả 7 ngày", desc: "Miễn phí đổi size / màu" },
   { icon: "icon-support", title: "Hỗ trợ 8:00–21:00", desc: "Hotline 1900 1234" },
 ];
-const THANH_TOAN = ["visa", "mastercard", "vnpay", "momo", "vietqr", "cod"];
+const THANH_TOAN = ["vietqr", "cod"];
 
 export function CartScreen() {
   const hydrated = useStoreHydrated(useCartStore);

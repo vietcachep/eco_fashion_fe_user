@@ -21,8 +21,6 @@ export const ROUTES = {
   checkout: "/checkout",
   /* Trang đặt thành công — tham số là mã ĐƠN CHA (DHN…); màn cũng nhận mã đơn con (DH…) và tự tìm ra nhóm chứa nó. */
   checkoutSuccess: (groupCode: string) => `/checkout/success/${groupCode}`,
-  /* VNPay đưa khách quay lại đây (EF_WEB_URL/checkout/vnpay-return) — BE xác minh chữ ký rồi mới sang trang cảm ơn. */
-  checkoutVnpayReturn: "/checkout/vnpay-return",
   /* PayOS đưa khách quay lại đây kèm `orderCode` của PayOS — BE hỏi lại PayOS rồi ghi nhận. */
   checkoutPayosReturn: "/checkout/payos-return",
   wishlist: "/wishlist",
@@ -47,6 +45,8 @@ export const ROUTES = {
   returns: "/returns-policy",
   privacy: "/privacy",
   terms: "/terms",
+  /* Người bán tự đăng ký gian hàng (PLAN-0009): giới thiệu + form + trạng thái hồ sơ của tôi. */
+  sell: "/sell",
   /* FITLY AI features */
   aiAssistant: "/ai-assistant",
   aiImageSearch: "/ai-image-search",
@@ -73,11 +73,9 @@ export const PRODUCT_SORTS = [
 
 export type ProductSort = (typeof PRODUCT_SORTS)[number]["value"];
 
-/* Phương thức thanh toán. Cổng thẻ là SANDBOX mô phỏng (features/payment) — cổng thật chốt sau, xem PLAN-0001 mục 8. */
+/* Phương thức thanh toán (PLAN-0018): chỉ COD và PayOS. Chế độ mẫu chỉ có COD; có backend thì `GET /payment-methods` quyết. */
 export const PAYMENT_METHODS = [
-  { code: "cod", label: "Thanh toán khi nhận hàng", hint: "Trả tiền mặt cho nhân viên giao hàng" },
-  { code: "bank_transfer", label: "Chuyển khoản ngân hàng", hint: "Đặt xong hiện số tài khoản + nội dung; đơn xác nhận khi tiền về" },
-  { code: "card", label: "Thẻ quốc tế", hint: "Visa · Mastercard · JCB" },
+  { code: "cod", label: "Thanh toán khi nhận hàng (COD)", hint: "Trả tiền mặt cho nhân viên giao hàng" },
 ] as const;
 
 /* Lý do huỷ đơn / trả hàng — câu khách chọn được ghi nguyên văn vào lịch sử đơn (chỉ tiếng Việt). */

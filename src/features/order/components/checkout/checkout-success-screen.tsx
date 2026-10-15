@@ -8,11 +8,10 @@ import { formatDate, formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { IconCheck } from "@/components/shared/icons";
 import { MockBadge } from "@/components/shared/mock-badge";
-import { BankTransferPanel } from "@/features/payment/components/bank-transfer-panel";
 import { PayOrderButton } from "@/features/payment/components/pay-order-button";
 import { canPayOnline } from "@/features/payment/hooks/use-pay-order";
 import { useOrderGroup } from "@/features/order/hooks/use-orders";
-import { MAU_TRANG_THAI, TEN_PHUONG_THUC, TRANG_THAI_DON, TRANG_THAI_THANH_TOAN } from "@/features/order/hooks/order-status";
+import { MAU_TRANG_THAI, tenPhuongThuc, TRANG_THAI_DON, TRANG_THAI_THANH_TOAN } from "@/features/order/hooks/order-status";
 import type { OrderGroupResponse, OrderResponse } from "@/features/order/types";
 import { nhanBienThe } from "@/stores/cart-store";
 
@@ -20,11 +19,10 @@ import { nhanBienThe } from "@/stores/cart-store";
  * Trang cảm ơn sau khi đặt hàng — `thank-you` của Vineta (title-success-order, box-progress-order, box-ship-address,
  * cột phải order-box) với nội dung theo eco_frontend_user: đơn đã vào hệ thống chưa, giao tới đâu, trả tiền thế nào.
  *
- * ĐƠN CHA (PLAN-0014): `code` là mã ĐƠN CHA (DHN…) — cũng nhận mã đơn con (DH…) khi cổng VNPay/PayOS đưa khách quay lại, hook
+ * ĐƠN CHA (PLAN-0014): `code` là mã ĐƠN CHA (DHN…) — cũng nhận mã đơn con (DH…) khi cổng PayOS đưa khách quay lại, hook
  * tự tìm ra nhóm chứa nó. Giỏ nhiều shop = nhiều ĐƠN CON, mỗi đơn có trạng thái, số tiền và thanh toán RIÊNG: trang liệt kê
  * từng đơn con (shop, mã, tổng, trạng thái thanh toán) và đặt đúng thứ khách cần làm NGAY dưới đơn đó —
- *   · VNPay/PayOS: nút "Thanh toán" mở cổng (link 30 phút; hết hạn → tạo lại). Khách trả LẦN LƯỢT từng đơn; đơn kế tiếp nổi bật.
- *   · Chuyển khoản tay: mã QR + số tài khoản + nội dung của RIÊNG đơn đó.
+ *   · PayOS: nút "Thanh toán" mở cổng (link 30 phút; hết hạn → tạo lại). Khách trả LẦN LƯỢT từng đơn; đơn kế tiếp nổi bật.
  *   · COD: không phải trả trước.
  * Quay về từ cổng (hoặc về tab) thì trang tải lại để thấy đơn vừa trả. Mọi số tiền là số server (Money Rule).
  */
@@ -97,7 +95,7 @@ function NoiDung({ nhom }: { nhom: OrderGroupResponse }) {
   const soDon = nhom.orders.length;
   const choThanhToan = nhom.orders.filter(canPayOnline);
   const donTiepTheo = choThanhToan[0]?.code;
-  const tenCacCach = [...new Set(nhom.orders.map((o) => TEN_PHUONG_THUC[o.payment_method_code]))].join(", ");
+  const tenCacCach = [...new Set(nhom.orders.map((o) => tenPhuongThuc(o.payment_method_code)))].join(", ");
   const ghiChu = nhom.orders.find((o) => o.customer_note)?.customer_note;
 
   return (
@@ -232,27 +230,23 @@ function DonCon({ order, stt, noiBat }: { order: OrderResponse; stt: string | nu
           </dl>
         </div>
         <div className="col-12 col-md-6">
-          <p className="text-sm fw-medium mb_8">{TEN_PHUONG_THUC[order.payment_method_code]}</p>
+          <p className="text-sm fw-medium mb_8">{tenPhuongThuc(order.payment_method_code)}</p>
           <ViecCanLam order={order} noiBat={noiBat} />
           {order.transaction_code && <p className="text-xs text-main font-mono mt_8">Mã giao dịch {order.transaction_code}</p>}
           <Link href={ROUTES.accountOrder(order.code)} className="text-sm fw-medium link text-decoration-underline d-inline-block mt_12">Xem chi tiết đơn này</Link>
         </div>
       </div>
 
-      {order.payment_intent && <div className="mt_16"><BankTransferPanel intent={order.payment_intent} /></div>}
     </div>
   );
 }
 
-/* Khách phải làm gì với đơn này — một dòng/nút theo phương thức + trạng thái. Chuyển khoản: khối QR nằm bên dưới. */
+/* Khách phải làm gì với đơn này — một dòng/nút theo phương thức + trạng thái. */
 function ViecCanLam({ order, noiBat }: { order: OrderResponse; noiBat: boolean }) {
   if (order.status === "cancelled") return <p className="text-sm text-main">Đơn đã huỷ{order.payment_status === "refunded" ? " — khoản thanh toán đã được hoàn" : ""}.</p>;
   if (order.payment_status === "paid") return <p className="text-sm text-main">Đã thanh toán. Cảm ơn bạn!</p>;
   if (order.payment_method_code === "cod") return <p className="text-sm text-main">Không cần trả trước — bạn thanh toán {formatMoney(order.total)} cho nhân viên giao hàng.</p>;
   if (canPayOnline(order)) return <PayOrderButton order={order} noiBat={noiBat} />;
-  if (order.payment_method_code === "bank_transfer") {
-    return <p className="text-sm text-main">{order.payment_intent ? "Chuyển khoản theo hướng dẫn bên dưới để đơn được xác nhận." : "Hạn chuyển khoản của đơn này đã qua."}</p>;
-  }
   if (order.payment_status === "processing") return <p className="text-sm text-main">Đang xử lý thanh toán — vui lòng đợi trong giây lát.</p>;
   return null;
 }

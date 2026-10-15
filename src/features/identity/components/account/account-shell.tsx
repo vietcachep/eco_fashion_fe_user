@@ -29,6 +29,7 @@ export const MUC_TAI_KHOAN = [
   { href: ROUTES.accountAddresses, label: "Sổ địa chỉ", icon: "icon-location" },
   { href: ROUTES.wishlist, label: "Sản phẩm yêu thích", icon: "icon-heart" },
   { href: ROUTES.accountReviews, label: "Đánh giá của tôi", icon: "icon-star" },
+  { href: ROUTES.sell, label: "Bán hàng cùng FITLY", icon: "icon-shop" },
 ] as const;
 
 /* Icon mục menu: glyph icomoon; riêng "bell" là SVG dùng chung vì bộ icomoon của Vineta không có chuông. */

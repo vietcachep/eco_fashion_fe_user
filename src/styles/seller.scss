@@ -1,0 +1,120 @@
+/*
+ * Trang "Đăng ký bán hàng" (`/sell`, PLAN-0009). Tiền tố `.sell-`. Chỉ dùng biến màu của Vineta (--primary, --line, --surface…)
+ * và tái dùng `.acc-card`, `.status-badge`, `.fs-skeleton` (account.scss / fitly.scss) — ở đây chỉ có phần các file đó chưa có.
+ * Import ở `features/seller/components/seller-landing.tsx` (không đụng app/layout.tsx dùng chung).
+ */
+
+/* --- Khung trang: mobile = giới thiệu → khung đăng ký → lợi ích & quy trình; desktop = trái (giới thiệu + lợi ích), phải (khung đăng ký). --- */
+.sell-layout {
+  display: grid; gap: 32px; grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "hero" "panel" "info";
+}
+.sell-hero { grid-area: hero; }
+.sell-panel-area { grid-area: panel; min-width: 0; }
+.sell-info { grid-area: info; display: grid; gap: 32px; }
+@media (min-width: 992px) {
+  .sell-layout {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); grid-template-rows: auto 1fr;
+    column-gap: 56px; row-gap: 40px; align-items: start;
+    grid-template-areas: "hero panel" "info panel";
+  }
+}
+
+/* --- Giới thiệu --- */
+.sell-eyebrow { display: inline-block; margin-bottom: 12px; font-size: 12px; line-height: 18px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--primary); }
+.sell-hero h2 { margin-bottom: 12px; }
+.sell-subtitle { margin-bottom: 20px; font-size: 18px; line-height: 26px; font-weight: 600; color: var(--dark); }
+
+.sell-benefits { list-style: none; margin: 0; padding: 0; display: grid; gap: 20px; }
+.sell-benefit { display: flex; align-items: flex-start; gap: 16px; }
+.sell-benefit h4 { margin: 0 0 2px; font-size: 16px; line-height: 24px; font-weight: 600; }
+.sell-benefit p { margin: 0; }
+.sell-icon { flex: 0 0 44px; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--primary-4); color: var(--primary); font-size: 18px; }
+
+.sell-steps { list-style: none; margin: 0; padding: 0; }
+.sell-step { position: relative; display: flex; align-items: flex-start; gap: 16px; padding-bottom: 22px; }
+.sell-step:last-child { padding-bottom: 0; }
+/* Đường nối đặt trên <li> (không phải ::after của số — số là grid, pseudo sẽ bị xếp thành ô giữa). */
+.sell-step:not(:last-child)::before { content: ""; position: absolute; top: 36px; bottom: 4px; left: 15px; width: 1px; background: var(--line-3); }
+.sell-step-num { flex: 0 0 32px; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--dark); color: var(--white); font-size: 14px; line-height: 1; font-weight: 600; }
+.sell-step h4 { margin: 3px 0 2px; font-size: 16px; line-height: 24px; font-weight: 600; }
+.sell-step p { margin: 0; }
+
+/* --- Khung đăng ký (thẻ `.acc-card`) --- */
+.sell-card { padding: 20px; }
+@media (min-width: 576px) { .sell-card { padding: 28px; } }
+.sell-card-title { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 4px; font-size: 20px; line-height: 28px; font-weight: 600; }
+.sell-card-lead { margin: 0 0 20px; }
+
+/* --- Form --- */
+.sell-form { display: grid; gap: 18px; }
+.sell-form fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+.sell-form label { display: block; margin-bottom: 8px; font-size: 14px; line-height: 20px; font-weight: 500; color: var(--dark); }
+.sell-req { margin-left: 2px; color: var(--red); }
+.sell-opt { margin-left: 6px; font-weight: 400; color: var(--text-3); }
+.sell-hint { display: block; margin-top: 6px; font-size: 12px; line-height: 18px; color: var(--text-3); }
+.sell-form textarea { height: 132px; resize: vertical; }
+.sell-counter { text-align: right; }
+/* Select tự vẽ mũi tên (mũi tên `.tf-select` của Vineta nằm z-index -1, bị nền trắng của thẻ che mất). */
+.sell-form select {
+  display: block; width: 100%; height: 50px; padding: 0 44px 0 20px; border: 1px solid var(--line); border-radius: 6px; outline: 0;
+  background: var(--white) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5 6 6.5l5-5' stroke='%23667085' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 18px center;
+  -webkit-appearance: none; appearance: none; font-size: 14px; line-height: 20px; color: var(--dark); cursor: pointer; transition: border-color .2s;
+}
+.sell-form select:hover, .sell-form select:focus { border-color: var(--dark); }
+.sell-form select:disabled { opacity: .6; cursor: not-allowed; }
+.sell-form select[aria-invalid="true"] { border-color: var(--red) !important; }
+.sell-terms .tf-cart-checkbox { align-items: flex-start; }
+.sell-terms .tf-checkbox-wrapp { margin-top: 3px; flex: 0 0 14px; }
+.sell-terms label { margin: 0; font-weight: 400; cursor: pointer; }
+.sell-error { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: 10px; background: var(--primary-4); color: #b8392b; font-size: 14px; line-height: 20px; }
+.sell-error a { color: inherit; font-weight: 600; text-decoration: underline; }
+.sell-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 4px; }
+.sell-actions .tf-btn { justify-content: center; }
+.sell-actions .sell-grow { flex: 1 1 200px; }
+
+/* --- Thẻ trạng thái hồ sơ --- */
+.sell-status-head { display: flex; align-items: flex-start; gap: 16px; }
+.sell-status-icon { flex: 0 0 48px; width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; font-size: 20px; }
+.sell-status-icon svg { width: 22px; height: 22px; }
+.sell-status-icon.is-warn { background: #fff4e5; color: #b25e00; }
+.sell-status-icon.is-ok { background: rgba(49, 208, 170, .14); color: #0f8a6a; }
+.sell-status-icon.is-bad { background: var(--primary-4); color: var(--primary); }
+.sell-status-icon.is-muted { background: var(--surface); color: var(--text-3); }
+.status-badge.is-bad { background: var(--primary-4); color: #b8392b; }
+.sell-status-body { min-width: 0; }
+.sell-status-title { margin: 8px 0 4px; font-size: 20px; line-height: 28px; font-weight: 600; overflow-wrap: anywhere; }
+.sell-status-lead { margin: 0; }
+.sell-reason { margin: 18px 0 0; padding: 12px 14px; border-radius: 10px; background: var(--surface-2); border-left: 3px solid var(--primary); }
+.sell-reason .sell-reason-label { display: block; margin-bottom: 2px; font-size: 12px; line-height: 18px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--text-3); }
+.sell-reason p { margin: 0; white-space: pre-line; overflow-wrap: anywhere; }
+/* Vineta reset `ol { list-style: none }` — danh sách có số thứ tự phải bật lại. */
+.sell-guide { margin: 18px 0 0; padding: 14px 16px 14px 36px; border-radius: 10px; background: var(--surface-2); list-style: decimal; }
+.sell-guide > li { list-style: decimal; }
+.sell-guide li + li { margin-top: 6px; }
+.sell-dl { margin: 20px 0 0; border-top: 1px solid var(--line); }
+.sell-dl > div { display: flex; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14px; line-height: 20px; }
+.sell-dl dt { flex: 0 0 140px; font-weight: 400; color: var(--text-3); }
+.sell-dl dd { margin: 0; min-width: 0; color: var(--dark); white-space: pre-line; overflow-wrap: anywhere; }
+@media (max-width: 575.98px) {
+  .sell-dl > div { flex-direction: column; gap: 2px; }
+  .sell-dl dt { flex-basis: auto; }
+  .sell-status-head { gap: 12px; }
+  .sell-status-icon { flex-basis: 40px; width: 40px; height: 40px; font-size: 17px; }
+}
+
+/* --- Mời đăng nhập / lỗi tải --- */
+.sell-prompt { display: grid; justify-items: center; gap: 8px; padding: 12px 0 4px; text-align: center; }
+.sell-prompt .sell-icon { width: 64px; height: 64px; flex-basis: 64px; font-size: 26px; margin-bottom: 8px; }
+.sell-prompt .sell-card-title { justify-content: center; }
+.sell-prompt p { max-width: 420px; margin: 0; }
+.sell-prompt .sell-actions { justify-content: center; margin-top: 12px; width: 100%; }
+.sell-note { margin: 12px 0 0; font-size: 12px; line-height: 18px; color: var(--text-3); }
+
+/* --- Skeleton khớp khung đăng ký (dùng `.fs-skeleton` của fitly.scss) --- */
+.sell-sk { display: grid; gap: 18px; }
+.sell-sk-title { height: 26px; width: 55%; }
+.sell-sk-lead { height: 14px; width: 80%; margin-top: -6px; }
+.sell-sk-field { height: 50px; }
+.sell-sk-area { height: 110px; }
+.sell-sk-btn { height: 48px; margin-top: 4px; }

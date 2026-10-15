@@ -103,7 +103,7 @@ Trong giai đoạn mock, `cart-store` được phép tính tạm tính để mà
 ```text
 src/
 ├── app/            # (shop) (auth) (account) — routing + layout ONLY
-├── features/       # catalog · cart · order · payment · promotion · identity · wishlist · review · system (liên hệ, FAQ, thông báo trong-app)
+├── features/       # catalog · cart · order · payment · promotion · identity · wishlist · review · system (liên hệ, FAQ, thông báo trong-app) · seller (người bán tự đăng ký gian hàng, `/sell` — PLAN-0009)
 ├── components/     # layout/ (topbar, header, nav, footer, mobile-menu, toolbar) · shared/ (product-card, price, quantity, page-title...)
 ├── lib/            # api, api-error, constants, format, query-client, utils
 ├── stores/         # auth-store, cart-store, wishlist-store

@@ -46,7 +46,7 @@ const playfair = Playfair_Display({
 
 export const metadata: Metadata = {
   title: { default: `${APP_NAME} — ${APP_TAGLINE}`, template: `%s | ${APP_NAME}` },
-  description: "FITLY — thời trang cơ bản, làm kỹ, giá hợp lý. Giao hàng toàn quốc.",
+  description: "FITLY — sàn thương mại điện tử nhiều gian hàng, nhiều ngành hàng: thời trang, điện tử, gia dụng, mỹ phẩm và hơn thế nữa. Giao hàng toàn quốc.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

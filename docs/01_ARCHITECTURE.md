@@ -25,6 +25,8 @@ Trang (Server Component)          Client Component
   (nay đọc mock; sau đổi ruột sang fetcher Orval, chữ ký giữ nguyên).
 * Màn phụ thuộc store hoặc mutation (giỏ, yêu thích, đặt hàng, xác thực): Client Component →
   hook → api → axios. Component không import `lib/api`.
+* Đăng ký bán hàng (`features/seller`, route `/sell`, PLAN-0009): trang tĩnh, MỘT đảo client (`SellerScreen`) rẽ nhánh theo
+  phiên + hồ sơ của tôi (`GET /shop/registrations/me`); nộp hồ sơ qua `POST /shop/registrations`. Chế độ mẫu: `mock/registration-mock-server.ts`.
 * Lọc / sắp xếp / phân trang danh sách nằm **trên URL**; `features/catalog/schemas/product-query-schema.ts`
   là nơi duy nhất đọc/ghi query string; `use-product-query.ts` là hook client cập nhật URL.
 

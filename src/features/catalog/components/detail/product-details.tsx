@@ -27,7 +27,7 @@ import { useCompareStore } from "@/stores/compare-store";
  * số lượng + Thêm giỏ, Mua ngay, các link phụ (yêu thích · so sánh · hỏi · chia sẻ), SKU/danh mục, cam kết
  * thanh toán, giao hàng; cuối là thanh dính Thêm giỏ hiện khi cuộn qua 500px (`StickyProducts`).
  */
-const THANH_TOAN = ["visa", "mastercard", "vnpay", "momo", "vietqr", "cod"];
+const THANH_TOAN = ["vietqr", "cod"];
 
 export function ProductDetails({ product, category }: { product: ProductDetailResponse; category: CategoryResponse | null }) {
   const vp = useVariantPicker(product);

@@ -27,13 +27,13 @@ export default async function AboutPage() {
           <div className="flat-title-2 d-xl-flex justify-content-xl-between">
             <div className="box-title">
               <p className="display-lg-2 fw-medium">Chào mừng đến {APP_NAME}</p>
-              <p className="text-xl">Thời trang cơ bản, làm kỹ, giá hợp lý</p>
+              <p className="text-xl">Nhiều gian hàng, nhiều ngành hàng, một giỏ hàng</p>
             </div>
             <div className="box-text">
               <p className="text-md">
-                {APP_NAME} bắt đầu từ một câu hỏi đơn giản: vì sao khó tìm một chiếc áo thun cơ bản vừa vặn,
-                <br className="d-none d-xl-block" /> vải tốt, giá không quá cao? Chúng tôi làm từng món nền tảng của tủ đồ —
-                <br className="d-none d-xl-block" /> áo thun, sơ mi, jean, váy, đầm, áo khoác — và làm thật kỹ.
+                {APP_NAME} là sàn thương mại điện tử nơi nhiều gian hàng cùng bán: thời trang, điện tử, gia dụng,
+                <br className="d-none d-xl-block" /> mỹ phẩm, thực phẩm và nhiều ngành khác. Mỗi gian hàng tự quản lý sản phẩm của mình;
+                <br className="d-none d-xl-block" /> bạn mua từ nhiều gian hàng trong cùng một lần đặt hàng và thanh toán.
               </p>
             </div>
           </div>

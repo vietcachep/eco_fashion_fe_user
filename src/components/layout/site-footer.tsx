@@ -19,6 +19,7 @@ const VE_CHUNG_TOI = [
   { text: "Liên hệ", href: ROUTES.contact },
   { text: "Câu hỏi thường gặp", href: ROUTES.faq },
   { text: "Gian hàng", href: ROUTES.shops },
+  { text: "Bán hàng cùng FITLY", href: ROUTES.sell },
   { text: "Trợ lý mua sắm AI", href: ROUTES.aiAssistant },
 ];
 const HO_TRO = [
@@ -28,7 +29,7 @@ const HO_TRO = [
   { text: "Chính sách vận chuyển", href: ROUTES.shipping },
   { text: "Theo dõi đơn hàng", href: ROUTES.accountOrders },
 ];
-const THANH_TOAN = ["visa", "mastercard", "vnpay", "momo", "vietqr", "cod"];
+const THANH_TOAN = ["vietqr", "cod"];
 
 export function SiteFooter({ paddingBottom = false, parentClass = "footer-default" }: { paddingBottom?: boolean; parentClass?: string }) {
   useEffect(() => {

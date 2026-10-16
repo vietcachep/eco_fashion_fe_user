@@ -33,6 +33,18 @@ export interface CollectionResponse {
   query: { category?: string; gender?: Gender; tag?: string };
 }
 
+/* Banner trang chủ do nhân viên sàn quản ở admin (Marketing → Banner trang chủ): `hero` = slide đầu trang, `promo` = khối khuyến mãi giữa trang (PLAN-0010). */
+export interface BannerResponse {
+  id: string;
+  title: string;
+  subtitle: string;
+  image_url: string;
+  /* Đường dẫn nội bộ ("/products?…") hoặc http(s) đầy đủ; null = banner không bấm được. */
+  link_url: string | null;
+  position: "hero" | "promo";
+  sort_order: number;
+}
+
 export interface ColorOption {
   /* Mã màu của catalog (BE lọc theo mã; mock chỉ có tên). */
   code?: string;

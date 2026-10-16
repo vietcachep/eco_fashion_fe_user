@@ -3,10 +3,11 @@ import type {
   ProductShopSummaryResponse as BeShopTom, ProductVariantResponse as BeVariant, ShopStorefrontResponse as BeShop,
 } from "@/lib/api/generated/model";
 import type {
-  CategoryResponse, CollectionResponse, ColorOption, Gender, ProductAttributeValue, ProductCardResponse, ProductDetailResponse, ProductImage,
+  BannerResponse, CategoryResponse, CollectionResponse, ColorOption, Gender, ProductAttributeValue, ProductCardResponse, ProductDetailResponse, ProductImage,
   ProductVariantResponse, ReviewResponse, ReviewStats, ShopResponse, ShopSummary, VariantOption,
 } from "@/features/catalog/types";
 import type { MediaItem, MoneyResponse } from "@/types/common";
+import { anhBannerHopLe } from "@/features/catalog/lib/banner-view";
 import { ghepMauSize } from "@/features/catalog/lib/variant-axes";
 
 /*
@@ -101,6 +102,21 @@ export function chuanHoaBoSuuTap(b: BeCollection): CollectionResponse {
     id: b.id, slug: b.slug, name: b.name, tagline: chuoi(b.tagline) ?? "", image_url: chuoi(b.imageUrl) ?? ANH_TRONG,
     query: { ...(q.category ? { category: q.category } : {}), ...(q.gender ? { gender: q.gender as Gender } : {}), ...(q.tag ? { tag: q.tag } : {}) },
   };
+}
+
+/*
+ * `GET /banners?position=hero|promo` — BannerResponse của BE (chỉ banner đang hiệu lực, đã sắp theo `sortOrder`). Swagger không khai schema response
+ * nên viết tay (nguồn: eco_backend `system/banner`). Banner thiếu ảnh/tiêu đề, ảnh sai host hoặc vị trí lạ ⇒ null (bị bỏ) để không làm vỡ trang chủ.
+ */
+export interface BeBanner {
+  id: string; title: string; subtitle: string | null; imageUrl: string; linkUrl: string | null; position: string; sortOrder: number;
+}
+
+export function chuanHoaBanner(b: BeBanner): BannerResponse | null {
+  const anh = chuoi(b.imageUrl);
+  const tieuDe = chuoi(b.title);
+  if (!anh || !tieuDe || !anhBannerHopLe(anh) || (b.position !== "hero" && b.position !== "promo")) return null;
+  return { id: b.id, title: tieuDe, subtitle: chuoi(b.subtitle) ?? "", image_url: anh, link_url: chuoi(b.linkUrl), position: b.position, sort_order: so(b.sortOrder) ?? 0 };
 }
 
 /* `GET /products/{slug}/reviews` — ReviewResponse của BE (đã che tên khách, có `reply` của shop). Swagger không khai schema nên viết tay. */

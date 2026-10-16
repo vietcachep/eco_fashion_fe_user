@@ -13,13 +13,13 @@ import { SAN_PHAM, chiTietSanPham, MOI_MAU, MOI_SIZE } from "@/features/catalog/
 import { CUA_HANG, timCuaHang } from "@/features/catalog/mock/shops";
 import { PRICE_RANGE } from "@/features/catalog/schemas/product-query-schema";
 import {
-  chuanHoaBoSuuTap, chuanHoaCard, chuanHoaChiTiet, chuanHoaCuaHang, chuanHoaDanhMuc, chuanHoaMau,
+  chuanHoaBanner, chuanHoaBoSuuTap, chuanHoaCard, chuanHoaChiTiet, chuanHoaCuaHang, chuanHoaDanhMuc, chuanHoaMau, type BeBanner,
 } from "@/features/catalog/api/catalog-adapter";
 import { bosungShop, getProductReviews } from "@/features/catalog/api/catalog-api";
 import { AI_STATUS_MOCK, getReviewSummary, type AiCollectionsView, type AiStatus, type ReviewSummaryView } from "@/features/catalog/api/ai-api";
 import { tinhFacet, type ProductFacets } from "@/features/catalog/lib/shop-facets";
 import type {
-  CategoryResponse, CollectionResponse, FilterFacets, ProductCardResponse, ProductDetailResponse,
+  BannerResponse, CategoryResponse, CollectionResponse, FilterFacets, ProductCardResponse, ProductDetailResponse,
   ProductPage, ProductQuery, ReviewPage, ReviewResponse, ShopPage, ShopResponse,
 } from "@/features/catalog/types";
 
@@ -57,6 +57,23 @@ export const fetchCollections = cache(async (): Promise<CollectionResponse[]> =>
   if (CHE_DO_MOCK) return BO_SUU_TAP;
   return (await goi<BeCollection[]>("/collections")).map(chuanHoaBoSuuTap);
 });
+
+/*
+ * Banner trang chủ do admin quản (PLAN-0010): `hero` = slide đầu trang, `promo` = khối khuyến mãi giữa trang; BE chỉ trả banner đang hiệu lực, đã sắp theo
+ * `sortOrder`. Chế độ mẫu hoặc BE lỗi/trống ⇒ mảng rỗng và trang chủ dùng nội dung mặc định trong component — banner là phần trang trí nên lỗi ở đây
+ * KHÔNG được làm hỏng cả trang chủ (khác sản phẩm: dữ liệu giả lẫn vào số thật là sai).
+ */
+const fetchBanners = cache(async (position: "hero" | "promo"): Promise<BannerResponse[]> => {
+  if (CHE_DO_MOCK) return [];
+  try {
+    return (await goi<BeBanner[]>("/banners", { position })).flatMap((b) => chuanHoaBanner(b) ?? []);
+  } catch {
+    return [];
+  }
+});
+
+export const fetchHeroBanners = (): Promise<BannerResponse[]> => fetchBanners("hero");
+export const fetchPromoBanners = (): Promise<BannerResponse[]> => fetchBanners("promo");
 
 /* Dữ liệu menu header/mobile — BE lỗi thì menu vẫn hiện (không có danh mục) thay vì cả site 500. */
 export async function fetchNavData(): Promise<{ danhMuc: CategoryResponse[]; boSuuTap: CollectionResponse[] }> {

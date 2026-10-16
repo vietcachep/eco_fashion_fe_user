@@ -1,5 +1,6 @@
 import { ROUTES } from "@/lib/constants";
-import type { CategoryResponse, CollectionResponse, ProductCardResponse, ReviewResponse } from "@/features/catalog/types";
+import type { BannerResponse, CategoryResponse, CollectionResponse, ProductCardResponse, ReviewResponse } from "@/features/catalog/types";
+import { bannerSangSlide } from "@/features/catalog/lib/banner-view";
 import { Hero } from "@/features/catalog/components/home/hero";
 import { DepartmentStrip } from "@/features/catalog/components/home/department-strip";
 import { Collections } from "@/features/catalog/components/home/collections";
@@ -19,8 +20,11 @@ import type { AiCollectionsView } from "@/features/catalog/api/ai-api";
  * Hero → Dải ngành hàng → Collections → Products (tab) → [Dành riêng cho bạn] → [Gợi ý theo dịp] → Banner
  * → Testimonials → (Brands: bỏ, xem PLAN-0005) → Shopgram → Features. Hai khối trong ngoặc là AI
  * (PLAN-0007), tự ẩn khi không có.
+ *
+ * Hero và khối khuyến mãi đọc banner do admin quản (PLAN-0010): `heroBanners` rỗng ⇒ Hero dùng slide dự phòng; `promoBanners` rỗng ⇒ Banner dùng nội dung dự phòng;
+ * nhiều `promoBanners` ⇒ Banner trượt qua từng cái.
  */
-export function HomeScreen({ danhMuc, collections, bestselling, sale, newest, testimonials, aiCollections = null }: {
+export function HomeScreen({ danhMuc, collections, bestselling, sale, newest, testimonials, aiCollections = null, heroBanners = [], promoBanners = [] }: {
   danhMuc: CategoryResponse[];
   collections: CollectionResponse[];
   bestselling: ProductCardResponse[];
@@ -28,10 +32,12 @@ export function HomeScreen({ danhMuc, collections, bestselling, sale, newest, te
   newest: ProductCardResponse[];
   testimonials: ReviewResponse[];
   aiCollections?: AiCollectionsView | null;
+  heroBanners?: BannerResponse[];
+  promoBanners?: BannerResponse[];
 }) {
   return (
     <>
-      <Hero />
+      <Hero slides={heroBanners.length > 0 ? heroBanners.map((b, i) => bannerSangSlide(b, i)) : undefined} />
       <DepartmentStrip danhMuc={danhMuc} />
       <Collections collections={collections} />
       <ProductsTabs tabs={[
@@ -41,7 +47,7 @@ export function HomeScreen({ danhMuc, collections, bestselling, sale, newest, te
       ]} />
       <ForYouRail />
       {aiCollections && <AiCollections data={aiCollections} />}
-      <Banner products={sale} />
+      <Banner products={sale} banners={promoBanners} />
       <Testimonials reviews={testimonials} />
       <Shopgram products={newest} />
       <Features />

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Image from "next/image";
 import { Suspense } from "react";
 import { ROUTES } from "@/lib/constants";
@@ -58,6 +59,7 @@ export function ShopScreen({ shop, page, categories, category, facets, saleProdu
                 <ShopRating value={shop.rating_avg} count={shop.review_count} className="list-star" textClass={cn("text-xs", shop.banner_url ? "text-white" : "text-main")} />
                 {shop.description && <p className="text-sm mt_10 mb_4">{shop.description}</p>}
                 <p className="text-sm mb-0">{shop.product_count} sản phẩm</p>
+                <Link href={ROUTES.contactTo({ shopSlug: shop.slug, shop: shop.name })} className="tf-btn btn-out-line-dark2 animate-btn mt_12">Nhắn cho shop</Link>
               </div>
             </div>
           </div>

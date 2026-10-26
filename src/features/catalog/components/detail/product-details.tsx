@@ -136,9 +136,14 @@ export function ProductDetails({ product, category }: { product: ProductDetailRe
                           <ShopRating value={product.shop.rating_avg} className="list-star text-xs" />
                         </span>
                       </Link>
-                      <Link href={ROUTES.shop(product.shop.slug)} className="tf-btn btn-out-line-dark2 animate-btn">
-                        Xem gian hàng
-                      </Link>
+                      <span className="d-flex flex-wrap gap-2">
+                        <Link href={ROUTES.contactTo({ shopSlug: product.shop.slug, shop: product.shop.name, product: product.name })} className="tf-btn btn-out-line-dark2 animate-btn">
+                          Hỏi shop
+                        </Link>
+                        <Link href={ROUTES.shop(product.shop.slug)} className="tf-btn btn-out-line-dark2 animate-btn">
+                          Xem gian hàng
+                        </Link>
+                      </span>
                     </div>
                   )}
 

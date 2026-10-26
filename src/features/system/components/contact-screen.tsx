@@ -3,7 +3,9 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
-import { APP_NAME } from "@/lib/constants";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { APP_NAME, ROUTES } from "@/lib/constants";
 import { FieldMessage } from "@/components/shared/field-message";
 import { contactSchema, type ContactInput } from "@/features/system/schemas/contact-schema";
 import { sendContact } from "@/features/system/api/system-api";
@@ -16,6 +18,11 @@ import { apiErrorMessage } from "@/lib/api-error";
  * giả lập độ trễ) rồi báo tại chỗ. Thông tin cửa hàng: chủ shop sửa ở đây.
  */
 export function ContactScreen() {
+  /* Ngữ cảnh từ nút "Hỏi shop" / "Hỏi shop về đơn này": có shop ⇒ tin đi gian hàng đó; không có ⇒ tin đi sàn. */
+  const sp = useSearchParams();
+  const target = { shopSlug: sp.get("shopSlug") ?? undefined, shopId: sp.get("shopId") ?? undefined, orderCode: sp.get("order") ?? undefined, productName: sp.get("product") ?? undefined };
+  const shopName = sp.get("shop");
+  const toShop = Boolean(target.shopSlug || target.shopId);
   const form = useForm<ContactInput>({ resolver: zodResolver(contactSchema), defaultValues: { name: "", email: "", phone: "", message: "" } });
   const e = form.formState.errors;
   const [daGui, setDaGui] = useState(false);
@@ -56,11 +63,23 @@ export function ContactScreen() {
           <div className="col-lg-6">
             <div className="content-right">
               <div className="title fw-medium display-md-2">Gửi tin nhắn</div>
-              <p className="sub-title text-main">Hỏi về size, đơn hàng, đổi trả — hoặc chỉ để chào một tiếng.</p>
+              {toShop ? (
+                <div className="acc-card is-accent mb_15">
+                  <p className="text-sm fw-medium">Bạn đang nhắn cho gian hàng {shopName ?? "này"}</p>
+                  <p className="text-xs text-main">
+                    {target.productName ? `Về sản phẩm: ${target.productName}. ` : ""}{target.orderCode ? `Về đơn ${target.orderCode}. ` : ""}
+                    Gian hàng sẽ trả lời qua email. Cần sàn FITLY hỗ trợ (khiếu nại, chính sách, thanh toán)? <Link href={ROUTES.contactTo({ order: target.orderCode })} className="link">Nhắn cho sàn</Link>.
+                  </p>
+                </div>
+              ) : (
+                <p className="sub-title text-main">
+                  Gửi tin cho <b>sàn FITLY</b>: chính sách, thanh toán, tài khoản, khiếu nại.{target.orderCode ? ` (Về đơn ${target.orderCode}.)` : ""} Muốn hỏi về size, màu, hàng còn không? Mở sản phẩm và bấm <b>Hỏi shop</b>.
+                </p>
+              )}
               <div className="form-contact-wrap">
                 <form className="form-default" noValidate onSubmit={form.handleSubmit(async (v) => {
                   setLoi(null);
-                  try { await sendContact(v); setDaGui(true); form.reset(); }
+                  try { await sendContact(v, target); setDaGui(true); form.reset(); }
                   catch (err) { setLoi(apiErrorMessage(err, "Không gửi được tin nhắn, vui lòng thử lại")); }
                 })}>
                   <div className="wrap">
@@ -90,7 +109,7 @@ export function ContactScreen() {
                         <FieldMessage message={e.message?.message} />
                       </fieldset>
                     </div>
-                    {daGui && <p className="text-sm text-primary mb_15">{CHE_DO_MOCK ? "Đã nhận tin nhắn (dữ liệu mẫu — chưa gửi tới máy chủ)." : "Đã gửi tin nhắn. FITLY sẽ phản hồi qua email trong 24 giờ làm việc."}</p>}
+                    {daGui && <p className="text-sm text-primary mb_15">{CHE_DO_MOCK ? "Đã nhận tin nhắn (dữ liệu mẫu — chưa gửi tới máy chủ)." : `Đã gửi tin nhắn. ${toShop ? "Gian hàng" : "FITLY"} sẽ phản hồi qua email.`}</p>}
                     {loi && <p className="text-sm text-danger mb_15">{loi}</p>}
                     <div className="button-submit">
                       <button className="tf-btn animate-btn" type="submit" disabled={form.formState.isSubmitting}>Gửi</button>

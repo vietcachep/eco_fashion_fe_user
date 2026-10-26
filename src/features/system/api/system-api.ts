@@ -15,9 +15,11 @@ const THU_TU = ["payment", "shipping", "returns", "general"];
 
 interface BeFaq { id: string; question: string; answer: string; groupCode: string; sortOrder: number }
 
-export async function sendContact(input: ContactInput): Promise<void> {
+export interface ContactTarget { shopSlug?: string; shopId?: string; orderCode?: string; productName?: string }
+
+export async function sendContact(input: ContactInput, target: ContactTarget = {}): Promise<void> {
   if (CHE_DO_MOCK) { await new Promise((r) => setTimeout(r, 500)); return; }
-  await api.post(`${API_PREFIX}/contact`, { name: input.name, email: input.email, phone: input.phone || undefined, message: input.message });
+  await api.post(`${API_PREFIX}/contact`, { name: input.name, email: input.email, phone: input.phone || undefined, message: input.message, shopSlug: target.shopSlug, shopId: target.shopId, orderCode: target.orderCode, productName: target.productName });
 }
 
 export async function listFaqs(): Promise<FaqGroup[] | null> {

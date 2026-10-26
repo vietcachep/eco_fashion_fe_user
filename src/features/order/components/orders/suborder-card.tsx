@@ -53,6 +53,10 @@ export function SubOrderCard({ order, stt, panel, moHanhTrinh = false }: { order
         <div className="min-w-0">
           {stt && <p className="text-xs text-main">{stt}</p>}
           <p className="text-sm fw-semibold"><ShopLink name={order.shop_name} /></p>
+          <p className="text-xs mb-0 d-flex flex-wrap gap-8">
+            <Link href={ROUTES.contactTo({ shopId: order.shop_id, shop: order.shop_name, order: order.code })} className="link">Hỏi shop về đơn này</Link>
+            <Link href={ROUTES.contactTo({ order: order.code })} className="link">Khiếu nại với sàn</Link>
+          </p>
         </div>
         <span className="text-xs text-main font-mono">{order.code}</span>
         <span className="ms-auto d-flex flex-wrap gap-6">

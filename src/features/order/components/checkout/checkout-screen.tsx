@@ -108,7 +108,7 @@ function CheckoutBody({ onDaDat }: { onDaDat: (thongBao: string) => void }) {
   const phuongThucChon = useWatch({ control: form.control, name: "paymentMethod" });
   const { data: phuongThuc } = usePaymentMethods();
   /* Phương thức đang chọn mà server không còn bật (vd COD bị tắt) → lùi về cái đầu tiên của danh sách. */
-  const paymentCode: PaymentMethodCode = phuongThuc?.length && !phuongThuc.some((m) => m.code === phuongThucChon) ? phuongThuc[0].code : phuongThucChon;
+  const paymentCodeBanDau: PaymentMethodCode = phuongThuc?.length && !phuongThuc.some((m) => m.code === phuongThucChon) ? phuongThuc[0].code : phuongThucChon;
   const placeOrder = usePlaceOrder();
 
   const address = addresses.find((a) => a.id === addressId) ?? macDinh;
@@ -118,6 +118,10 @@ function CheckoutBody({ onDaDat }: { onDaDat: (thongBao: string) => void }) {
   const { data: summary, isError: loiBangTien, isFetching: dangTinh, isPlaceholderData, refetch } = useCheckoutSummary(address?.id, voucherCodes);
   /* Bảng tiền trên màn đã khớp giỏ + mã hiện tại (không phải số cũ giữ tạm) → mới được đặt. */
   const bangTienMoi = Boolean(summary) && !dangTinh && !isPlaceholderData;
+  /* PLAN-0020: gian hàng chưa đặt cọc thì không nhận COD → khoá COD, tự chuyển sang phương thức khác (PayOS) nếu có. */
+  const shopChanCod = (summary?.shop_groups ?? []).filter((g) => !g.cod_available).map((g) => g.shop_name);
+  const codBiChan = shopChanCod.length > 0;
+  const paymentCode: PaymentMethodCode = codBiChan && paymentCodeBanDau === "cod" ? (phuongThuc?.find((m) => m.code !== "cod")?.code ?? "cod") : paymentCodeBanDau;
   const canhBao = summary?.warnings ?? [];
   const maBiTuChoi = (summary?.vouchers ?? []).filter((v) => !v.ok);
 
@@ -246,7 +250,7 @@ function CheckoutBody({ onDaDat }: { onDaDat: (thongBao: string) => void }) {
                   <div className="text-xl fw-medium mb_4">Phương thức thanh toán</div>
                   <p className="text-sm text-main">Mọi giao dịch đều được mã hoá và bảo mật.</p>
                 </div>
-                <PaymentMethodList value={paymentCode} onSelect={(code) => form.setValue("paymentMethod", code, { shouldValidate: true })} soDon={soDonCon} />
+                <PaymentMethodList value={paymentCode} shopChanCod={shopChanCod} onSelect={(code) => form.setValue("paymentMethod", code, { shouldValidate: true })} soDon={soDonCon} />
               </div>
             </div>
           </div>
@@ -303,7 +307,7 @@ function CheckoutBody({ onDaDat }: { onDaDat: (thongBao: string) => void }) {
 
                 <div className="btn-order">
                   <button type="button" className="tf-btn btn-dark2 animate-btn w-100"
-                    disabled={!address || placeOrder.isPending || !bangTienMoi || dongDaChon.length === 0 || canhBao.length > 0 || !paymentCode}
+                    disabled={!address || placeOrder.isPending || !bangTienMoi || dongDaChon.length === 0 || canhBao.length > 0 || !paymentCode || (paymentCode === "cod" && codBiChan)}
                     onClick={datHang}>
                     {nhanNut}
                   </button>

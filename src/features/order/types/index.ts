@@ -110,6 +110,8 @@ export interface OrderResponse {
 export interface CheckoutShopGroup {
   shop_id: string;
   shop_name: string;
+  /* PLAN-0020: false = gian hàng chưa đặt cọc nên không nhận COD (khách phải chọn PayOS). */
+  cod_available: boolean;
   item_count: number;
   subtotal: MoneyResponse;
   shipping_fee: MoneyResponse;

@@ -14,8 +14,10 @@ import type { PaymentMethodCode } from "@/features/order/types";
  */
 const ICON: Record<PaymentMethodCode, () => React.ReactElement> = { cod: IconCash, payos: IconBank };
 
-export function PaymentMethodList({ value, onSelect, soDon = 1 }: {
+export function PaymentMethodList({ value, onSelect, soDon = 1, shopChanCod = [] }: {
   value: PaymentMethodCode; onSelect: (code: PaymentMethodCode) => void; soDon?: number;
+  /* Tên các gian hàng trong giỏ chưa đặt cọc nên không nhận COD (PLAN-0020) — có thì khoá lựa chọn COD. */
+  shopChanCod?: string[];
 }) {
   const { data: methods = [], isLoading, isError, refetch } = usePaymentMethods();
 
@@ -40,16 +42,19 @@ export function PaymentMethodList({ value, onSelect, soDon = 1 }: {
       {methods.map((pm) => {
         const active = pm.code === value;
         const Icon = ICON[pm.code];
+        const biChan = pm.code === "cod" && shopChanCod.length > 0;
         return (
-          <div key={pm.code} className={cn("payment-item mb_12", active && "active")}>
+          <div key={pm.code} className={cn("payment-item mb_12", active && "active", biChan && "opacity-50")}>
             <label className="payment-header" htmlFor={`pm-${pm.code}`}>
-              <input type="radio" name="payment-method" className="tf-check-rounded" id={`pm-${pm.code}`} checked={active} onChange={() => onSelect(pm.code)} />
+              <input type="radio" name="payment-method" className="tf-check-rounded" id={`pm-${pm.code}`} checked={active} disabled={biChan} onChange={() => onSelect(pm.code)} />
               <span className={cn("pm-icon", active && "on")} aria-hidden>{active ? <IconCheck /> : <Icon />}</span>
               <span className="pm-text">
                 <span className="pay-title text-sm fw-medium d-flex align-items-center flex-wrap gap-8">
                   {pm.label}
                 </span>
-                <span className="text-xs text-main d-block">{pm.hint}</span>
+                <span className="text-xs text-main d-block">
+                  {biChan ? `Không áp dụng: ${shopChanCod.join(", ")} chưa mở thanh toán khi nhận hàng — vui lòng thanh toán trước (PayOS).` : pm.hint}
+                </span>
               </span>
             </label>
 

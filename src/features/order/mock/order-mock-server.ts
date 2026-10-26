@@ -68,7 +68,7 @@ function tinhTien(voucherCode: string | null | undefined): CheckoutSummaryRespon
   }
   /* Mẫu: chưa phân bổ giảm giá về từng shop (`discount` 0) — chỉ backend thật chia mã sàn/mã shop theo đơn con. */
   const shopGroups = [...nhom.entries()].map(([shopId, g]) => ({
-    shop_id: shopId, shop_name: g.ten, item_count: g.itemCount, subtotal: tien(g.subtotal), shipping_fee: tien(phiVanChuyen(g.subtotal)),
+    shop_id: shopId, shop_name: g.ten, cod_available: true, item_count: g.itemCount, subtotal: tien(g.subtotal), shipping_fee: tien(phiVanChuyen(g.subtotal)),
     discount: tien(0), total: tien(g.subtotal + phiVanChuyen(g.subtotal)),
   }));
   const ship = shopGroups.reduce((s, g) => s + Number(g.shipping_fee.amount), 0);

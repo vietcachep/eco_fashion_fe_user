@@ -10,6 +10,8 @@ import type { MoneyResponse } from './moneyResponse';
 export interface CheckoutShopGroupResponse {
   shopId: string;
   shopName: string;
+  /** PLAN-0020: gian hàng này nhận COD (đã đặt cọc, ví > 0) — false thì khách phải chọn PayOS cho giỏ có shop này */
+  codAvailable: boolean;
   itemCount: number;
   subtotal: MoneyResponse;
   shippingFee: MoneyResponse;

@@ -76,7 +76,7 @@ export function chuanHoaBangTien(b: BeSummary): CheckoutSummaryResponse {
       ok: v.ok, error: chuoi(v.error), discount: v.discount,
     })),
     shop_groups: (b.shopGroups ?? []).map((g) => ({
-      shop_id: g.shopId, shop_name: g.shopName, item_count: g.itemCount,
+      shop_id: g.shopId, shop_name: g.shopName, cod_available: g.codAvailable !== false, item_count: g.itemCount,
       subtotal: g.subtotal, shipping_fee: g.shippingFee, discount: g.discount, total: g.total,
     })),
   };

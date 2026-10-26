@@ -40,6 +40,20 @@ export const ROUTES = {
   accountNotifications: "/account/notifications",
   about: "/about",
   contact: "/contact",
+  /*
+   * Liên hệ CÓ NGỮ CẢNH — nơi khách bấm quyết định tin đi SHOP hay SÀN (PLAN-0021): có `shopSlug`/`shopId` ⇒ gửi gian hàng đó (hỏi sản phẩm / đơn),
+   * không có ⇒ gửi SÀN. `product` / `order` chỉ để người trả lời biết khách đang hỏi gì.
+   */
+  contactTo: (c: { shopSlug?: string; shopId?: string; shop?: string; product?: string; order?: string }) => {
+    const q = new URLSearchParams();
+    if (c.shopSlug) q.set("shopSlug", c.shopSlug);
+    if (c.shopId) q.set("shopId", c.shopId);
+    if (c.shop) q.set("shop", c.shop);
+    if (c.product) q.set("product", c.product);
+    if (c.order) q.set("order", c.order);
+    const s = q.toString();
+    return s ? `/contact?${s}` : "/contact";
+  },
   faq: "/faq",
   shipping: "/shipping",
   returns: "/returns-policy",

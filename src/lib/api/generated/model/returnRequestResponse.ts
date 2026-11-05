@@ -7,24 +7,131 @@
  */
 import type { MediaItemResponse } from './mediaItemResponse';
 import type { MoneyResponse } from './moneyResponse';
+import type { RefundAccountResponse } from './refundAccountResponse';
+import type { ReturnAddressResponse } from './returnAddressResponse';
 import type { ReturnItemResponse } from './returnItemResponse';
+import type { ReturnRefundResponse } from './returnRefundResponse';
+import type { ReturnRequestResponseAdjustReason } from './returnRequestResponseAdjustReason';
+import type { ReturnRequestResponseApprovedAt } from './returnRequestResponseApprovedAt';
+import type { ReturnRequestResponseCarrier } from './returnRequestResponseCarrier';
+import type { ReturnRequestResponseDeadlineAt } from './returnRequestResponseDeadlineAt';
+import type { ReturnRequestResponseDeadlineKind } from './returnRequestResponseDeadlineKind';
 import type { ReturnRequestResponseDetail } from './returnRequestResponseDetail';
+import type { ReturnRequestResponseEscalatedAt } from './returnRequestResponseEscalatedAt';
+import type { ReturnRequestResponseEscalateReason } from './returnRequestResponseEscalateReason';
+import type { ReturnRequestResponseEscalateSource } from './returnRequestResponseEscalateSource';
 import type { ReturnRequestResponseProcessedAt } from './returnRequestResponseProcessedAt';
+import type { ReturnRequestResponseReasonCode } from './returnRequestResponseReasonCode';
+import type { ReturnRequestResponseReceivedAt } from './returnRequestResponseReceivedAt';
+import type { ReturnRequestResponseReceivedCondition } from './returnRequestResponseReceivedCondition';
+import type { ReturnRequestResponseReceivedNote } from './returnRequestResponseReceivedNote';
+import type { ReturnRequestResponseRefundedAt } from './returnRequestResponseRefundedAt';
+import type { ReturnRequestResponseRejectedBy } from './returnRequestResponseRejectedBy';
 import type { ReturnRequestResponseRejectReason } from './returnRequestResponseRejectReason';
+import type { ReturnRequestResponseResolvedAt } from './returnRequestResponseResolvedAt';
+import type { ReturnRequestResponseResolvedBy } from './returnRequestResponseResolvedBy';
+import type { ReturnRequestResponseResolveDecision } from './returnRequestResponseResolveDecision';
+import type { ReturnRequestResponseResolveNote } from './returnRequestResponseResolveNote';
+import type { ReturnRequestResponseShippedBackAt } from './returnRequestResponseShippedBackAt';
+import type { ReturnRequestResponseStatus } from './returnRequestResponseStatus';
+import type { ReturnRequestResponseTrackingCode } from './returnRequestResponseTrackingCode';
 
 export interface ReturnRequestResponse {
   id: string;
   orderCode: string;
-  status: string;
+  shopId: string;
+  shopName: string;
+  status: ReturnRequestResponseStatus;
+  reasonCode: ReturnRequestResponseReasonCode;
+  /** false = không cần trả hàng (khách báo chưa nhận hàng) — shop duyệt là hoàn tiền ngay, không nhập kho */
+  requireReturn: boolean;
   reason: string;
   /** @nullable */
   detail?: ReturnRequestResponseDetail;
+  /** Số tiền sẽ hoàn thực tế (shop chỉ được giảm; sàn ≤ tổng đơn − đã hoàn) */
+  refundAmount: MoneyResponse;
+  /** Số tiền hệ thống tính lúc tạo yêu cầu (theo tỉ lệ hàng trả) — so với refundAmount để thấy mức đã chỉnh */
+  calculatedRefundAmount: MoneyResponse;
+  /**
+     * Lý do chỉnh số tiền hoàn (có khi refundAmount ≠ calculatedRefundAmount)
+     * @nullable
+     */
+  adjustReason?: ReturnRequestResponseAdjustReason;
+  items: ReturnItemResponse[];
+  /** Minh chứng của khách */
+  evidence: MediaItemResponse[];
+  /**
+     * Hạn của bước đang chờ (ISO)
+     * @nullable
+     */
+  deadlineAt?: ReturnRequestResponseDeadlineAt;
+  /** @nullable */
+  deadlineKind?: ReturnRequestResponseDeadlineKind;
+  /** @nullable */
+  approvedAt?: ReturnRequestResponseApprovedAt;
+  /**
+     * Địa chỉ gửi trả — chỉ có khi status = approved
+     * @nullable
+     */
+  returnAddress?: ReturnAddressResponse | null;
+  /** @nullable */
+  carrier?: ReturnRequestResponseCarrier;
+  /** @nullable */
+  trackingCode?: ReturnRequestResponseTrackingCode;
+  /** @nullable */
+  shippedBackAt?: ReturnRequestResponseShippedBackAt;
+  /** @nullable */
+  receivedAt?: ReturnRequestResponseReceivedAt;
+  /** @nullable */
+  receivedCondition?: ReturnRequestResponseReceivedCondition;
+  /** @nullable */
+  receivedNote?: ReturnRequestResponseReceivedNote;
+  /** Minh chứng shop đính kèm khi xác nhận nhận hàng */
+  receivedEvidence: MediaItemResponse[];
+  /** @nullable */
+  rejectedBy?: ReturnRequestResponseRejectedBy;
   /** @nullable */
   rejectReason?: ReturnRequestResponseRejectReason;
-  refundAmount: MoneyResponse;
-  items: ReturnItemResponse[];
-  evidence: MediaItemResponse[];
+  /** Minh chứng shop đính kèm khi từ chối */
+  rejectEvidence: MediaItemResponse[];
+  /** @nullable */
+  escalatedAt?: ReturnRequestResponseEscalatedAt;
+  /** @nullable */
+  escalateReason?: ReturnRequestResponseEscalateReason;
+  /** @nullable */
+  escalateSource?: ReturnRequestResponseEscalateSource;
+  /**
+     * Id nhân viên sàn phân xử — chỉ có ở API của sàn
+     * @nullable
+     */
+  resolvedBy?: ReturnRequestResponseResolvedBy;
+  /** @nullable */
+  resolvedAt?: ReturnRequestResponseResolvedAt;
+  /** @nullable */
+  resolveDecision?: ReturnRequestResponseResolveDecision;
+  /** @nullable */
+  resolveNote?: ReturnRequestResponseResolveNote;
+  /**
+     * Tài khoản nhận hoàn đã che số — không có ở API của shop
+     * @nullable
+     */
+  refundAccount?: RefundAccountResponse | null;
+  /**
+     * Khoản hoàn tiền bên payment — chỉ có khi status = received/refunded
+     * @nullable
+     */
+  refund?: ReturnRefundResponse | null;
+  /** COD-08b: true khi yêu cầu "chưa nhận hàng" của đơn COD đã ghi thu kết thúc bằng ĐẢO ghi thu COD (refundAmount = 0, khách chưa trả tiền nên KHÔNG có khoản hoàn; ví shop được trả lại hoa hồng) */
+  codReversed: boolean;
+  /** Khách rút được (chưa gửi hàng) */
+  canCancel: boolean;
+  /** Khách báo đã gửi hàng trả được (đã duyệt, cần trả hàng, còn hạn) */
+  canShipBack: boolean;
+  /** Khách khiếu nại lên sàn được (shop từ chối, còn hạn khiếu nại) */
+  canEscalate: boolean;
   /** @nullable */
   processedAt?: ReturnRequestResponseProcessedAt;
+  /** @nullable */
+  refundedAt?: ReturnRequestResponseRefundedAt;
   createdAt: string;
 }

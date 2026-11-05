@@ -19,4 +19,8 @@ size?: number;
 status?: string;
 methodCode?: string;
 q?: string;
+/**
+ * Chỉ giao dịch của đơn thuộc gian hàng này
+ */
+shopId?: string;
 };

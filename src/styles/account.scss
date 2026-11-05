@@ -294,3 +294,61 @@ a.noti-item.is-unread:hover, button.noti-item.is-unread:hover { background: #fff
   .noti-item { padding: 12px; gap: 10px; }
   .noti-icon { flex-basis: 36px; width: 36px; height: 36px; }
 }
+
+/* --- Đổi trả & hoàn tiền (PLAN-0011): khối trạng thái, hạn chót, dòng thời gian có người phụ trách, form yêu cầu / gửi hàng / khiếu nại --- */
+.ret-banner { border-left: 4px solid #c9c9c9; }
+.ret-banner.is-ok { border-left-color: #31d0aa; }
+.ret-banner.is-warn { border-left-color: #f5a524; background: #fffdf8; }
+.ret-banner-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.ret-banner-title { margin: 0; font-size: 18px; line-height: 26px; font-weight: 600; overflow-wrap: anywhere; }
+.ret-deadline { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--surface-2); font-size: 14px; line-height: 20px; }
+.ret-deadline-left { font-weight: 600; color: var(--dark); }
+.ret-deadline.is-late { background: #fff4e5; color: #b25e00; }
+.ret-deadline.is-late .ret-deadline-left { color: #b25e00; }
+.ret-deadline-inline { color: var(--text-3); }
+.ret-deadline-inline.is-late { color: #b25e00; }
+.ret-block { padding: 12px 14px; border-radius: 10px; background: var(--surface-2); }
+/* Chữ do người dùng / shop / sàn viết: giữ xuống dòng và cho ngắt từ dài để không đẩy thẻ ra khỏi màn 390px. */
+.ret-note { white-space: pre-line; overflow-wrap: anywhere; }
+.ret-facts { display: grid; gap: 6px; margin: 0; font-size: 14px; }
+.ret-facts > div { display: flex; justify-content: space-between; gap: 12px; }
+.ret-facts dt { font-weight: 400; color: var(--text-3); }
+.ret-facts dd { margin: 0; font-weight: 500; text-align: right; overflow-wrap: anywhere; }
+.ret-address { padding: 12px 14px; border-radius: 10px; border: 1px dashed #ccc; background: var(--white); overflow-wrap: anywhere; }
+.ret-form { padding: 14px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--line); }
+.ret-form textarea.style-2 { width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; font-size: 14px; line-height: 22px; resize: vertical; }
+.ret-fields { display: grid; gap: 14px; }
+.ret-fields fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+.ret-fields label { display: block; margin-bottom: 6px; font-size: 13px; line-height: 20px; font-weight: 500; color: var(--dark); }
+.ret-req { margin-left: 2px; color: var(--red); }
+.ret-opt { margin-left: 6px; font-weight: 400; color: var(--text-3); }
+.ret-hint { display: block; margin-top: 6px; font-size: 12px; line-height: 18px; color: var(--text-3); }
+.ret-hint-box { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--white); border: 1px dashed #ddd; font-size: 12px; line-height: 18px; color: var(--text-3); }
+/* PLAN-0040 (AUD-15): khối "tiền hoàn về đâu / thế nào" trong form huỷ đơn đã thanh toán — viền liền, nền ấm như `.acc-card.is-accent` để khách không lướt qua. */
+.ret-hint-box.is-refund { border-style: solid; border-color: rgba(255, 111, 97, .45); background: #fffaf9; }
+/* Select tự vẽ mũi tên (mũi tên `.tf-select` của Vineta nằm z-index -1 nên bị nền trắng che) — cùng cách với `.sell-form select`. */
+.ret-fields select {
+  display: block; width: 100%; height: 50px; padding: 0 44px 0 16px; border: 1px solid var(--line); border-radius: 6px; outline: 0;
+  background: var(--white) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5 6 6.5l5-5' stroke='%23667085' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 16px center;
+  -webkit-appearance: none; appearance: none; font-size: 14px; line-height: 20px; color: var(--dark); cursor: pointer; transition: border-color .2s;
+}
+.ret-fields select:hover, .ret-fields select:focus { border-color: var(--dark); }
+.ret-fields select[aria-invalid="true"] { border-color: var(--red) !important; }
+.ret-fields input[aria-invalid="true"], .ret-form textarea[aria-invalid="true"] { border-color: var(--red) !important; }
+.ret-pick { flex-wrap: wrap; justify-content: space-between; cursor: default; }
+.ret-steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 13px; line-height: 20px; }
+/* Người phụ trách từng bước: Bạn · Shop · Sàn · Hệ thống. */
+.ret-owner { display: inline-block; margin-left: 8px; padding: 0 8px; border-radius: 999px; font-size: 11px; line-height: 18px; font-weight: 500; vertical-align: 1px; background: var(--surface); color: var(--text-3); }
+.ret-owner.is-customer { background: var(--primary-4); color: var(--primary); }
+.ret-owner.is-shop { background: #eef3ff; color: #3b5bdb; }
+.ret-owner.is-platform { background: #f3ecff; color: #6741d9; }
+.ret-timeline .tl-item.is-done .tl-dot { background: rgba(49, 208, 170, .14); border-color: transparent; color: #0f8a6a; }
+.ret-timeline .tl-item.is-stopped .tl-dot { background: #f3f3f3; border-color: #ddd; color: #8a8a8a; font-size: 15px; line-height: 1; }
+.ret-timeline .tl-item.is-upcoming .tl-dot { border-style: dashed; }
+.ret-timeline .tl-item.is-upcoming .tl-body { opacity: .85; }
+.ret-timeline .tl-body { min-width: 0; }
+@media (max-width: 575.98px) {
+  .ret-banner-title { font-size: 16px; line-height: 24px; }
+  .ret-facts > div { flex-direction: column; gap: 0; }
+  .ret-facts dd { text-align: left; }
+}

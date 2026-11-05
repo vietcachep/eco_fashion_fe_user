@@ -10,15 +10,18 @@ import type { CreateOrderRequestPaymentMethodCode } from './createOrderRequestPa
 import type { CreateOrderRequestVoucherCode } from './createOrderRequestVoucherCode';
 
 export interface CreateOrderRequest {
+  quoteIds?: string[];
   /** Địa chỉ trong sổ (ưu tiên nếu có) */
   addressId?: string;
   /** Hoặc nhập tay */
   address?: CheckoutAddressInput;
-  /** `cod` | `payos` */
+  /** Chỉ còn `cod` (shipper thu hộ cho sàn) hoặc `payos` */
   paymentMethodCode: CreateOrderRequestPaymentMethodCode;
   note?: string;
   /** @nullable */
   voucherCode?: CreateOrderRequestVoucherCode;
   /** Mã bổ sung (gộp với voucherCode): tối đa 1 mã sàn + 1 mã gian hàng cho mỗi shop trong giỏ */
   voucherCodes?: string[];
+  /** Tổng tiền cả lần đặt (Σ total các đơn con) khách đã thấy ở `GET /checkout/summary` (`total.amount`). Có gửi mà khác số server tính lại lúc đặt ⇒ 409 `ORDER_PRICE_CHANGED` kèm báo giá mới ở `data`, KHÔNG tạo đơn/giữ kho/ghi voucher. Bỏ trống ⇒ không kiểm (tương thích client cũ). */
+  expectedTotal?: string;
 }

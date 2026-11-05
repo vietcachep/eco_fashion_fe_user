@@ -20,4 +20,8 @@ size?: number;
 rating?: number;
 status?: AdminReviewControllerListStatus;
 q?: string;
+/**
+ * Chỉ đánh giá về sản phẩm của gian hàng này
+ */
+shopId?: string;
 };

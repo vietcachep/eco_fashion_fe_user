@@ -1,6 +1,6 @@
 import type { MoneyResponse } from "@/types/common";
 import { SAN_PHAM } from "@/features/catalog/mock/products";
-import type { OrderResponse, OrderStatus, OrderGroupResponse, ReturnRequestResponse, MyReviewResponse } from "@/features/order/types";
+import type { OrderResponse, OrderStatus, OrderGroupResponse, ReturnRequestResponse, ReturnStatus, MyReviewResponse } from "@/features/order/types";
 
 /*
  * DỮ LIỆU MẪU — vài đơn "lịch sử" ở nhiều trạng thái cho tài khoản demo, để
@@ -50,6 +50,7 @@ export const DON_MAU: OrderResponse[] = [
   }),
   donMau("DH2609081102", "shipping", 7, [dong("dam-suong-nu-basic", 1, "M", 1)], {
     payment_method_code: "cod", payment_status: "paid", tracking_url: "https://tracking.ghn.vn/?order_code=GHN2609081102",
+    carrier: "ghn", carrier_name: "Giao Hàng Nhanh", tracking_code: "GHN2609081102",
     moc: [["pending", 7], ["confirmed", 7], ["packing", 6], ["shipping", 5]],
   }),
   donMau("DH2609121503", "delivered", 3, [dong("ao-so-mi-nu-tay-phong", 0, "S", 1), dong("chan-vay-xep-ly", 0, "S", 1)], {
@@ -63,16 +64,79 @@ export const DON_MAU: OrderResponse[] = [
     moc: [["pending", 18], ["cancelled", 18]],
   }),
   donMau("DH2608200906", "returned", 26, [dong("dam-hoa-nhi-vintage", 0, "M", 1)], {
-    payment_status: "refunded", moc: [["pending", 26], ["confirmed", 26], ["packing", 25], ["shipping", 24], ["delivered", 22], ["returned", 19]],
+    payment_status: "refunded", refund: { status: "done", amount: tien(389_000) }, moc: [["pending", 26], ["confirmed", 26], ["packing", 25], ["shipping", 24], ["delivered", 22], ["returned", 19]],
+  }),
+  /* PLAN-0027: đã xác nhận (huỷ tức thì + đổi địa chỉ) · đang đóng gói đã thanh toán (chỉ gửi được YÊU CẦU huỷ) · đã giao COD (Đã nhận hàng / báo chưa nhận) ·
+     đã trả COD vì chưa nhận hàng (đảo ghi thu, KHÔNG hoàn tiền — xem TRA_HANG_MAU #4). */
+  donMau("DH2609151701", "confirmed", 1, [dong("ao-thun-cotton-nam-basic", 0, "M", 1)], {
+    moc: [["pending", 1], ["confirmed", 1]],
+  }),
+  donMau("DH2609141802", "packing", 2, [dong("quan-short-kaki-nam", 1, "31", 1)], {
+    payment_method_code: "payos", payment_status: "paid", transaction_code: "TXN-5B2D10",
+    moc: [["pending", 2], ["confirmed", 2], ["packing", 1]],
+  }),
+  donMau("DH2609131805", "delivered", 5, [dong("ao-so-mi-nu-tay-phong", 0, "M", 1)], {
+    payment_method_code: "cod", payment_status: "paid", carrier: "ghtk", carrier_name: "Giao Hàng Tiết Kiệm", tracking_code: "GHTK2609130421",
+    tracking_url: "https://i.ghtk.vn/GHTK2609130421",
+    moc: [["pending", 5], ["confirmed", 5], ["packing", 4], ["shipping", 3], ["delivered", 1]],
+  }),
+  donMau("DH2609101906", "returned", 9, [dong("chan-vay-xep-ly", 0, "M", 1)], {
+    payment_method_code: "cod", payment_status: "unpaid", carrier: "jnt", carrier_name: "J&T Express", tracking_code: "JT2609100077",
+    moc: [["pending", 9], ["confirmed", 9], ["packing", 8], ["shipping", 7], ["delivered", 5], ["returned", 3]],
   }),
 ];
 
+/*
+ * Khung yêu cầu đổi trả mẫu: mọi trường có giá trị trung tính, chỉ ghi đè phần khác nhau của từng trạng thái. Cờ hành động + hạn ghi tay ở
+ * từng bản ghi mẫu (đóng vai server — xem `capNhatCoTra` ở order-mock-server cho phần khách tự thao tác).
+ */
+export function traMau(id: string, orderCode: string, status: ReturnStatus, opts: Partial<ReturnRequestResponse> = {}): ReturnRequestResponse {
+  return {
+    id, order_code: orderCode, shop_id: "shop-1", shop_name: "FITLY Official", status, reason_code: "defective", require_return: true,
+    reason: "Hàng lỗi", detail: null, refund_amount: tien(0), calculated_refund_amount: tien(0), adjust_reason: null, items: [], evidence: [],
+    deadline_at: null, deadline_kind: null, approved_at: null, return_address: null, carrier: null, tracking_code: null, shipped_back_at: null,
+    received_at: null, received_condition: null, received_note: null, received_evidence: [], rejected_by: null, reject_reason: null, reject_evidence: [],
+    escalated_at: null, escalate_reason: null, escalate_source: null, resolved_at: null, resolve_decision: null, resolve_note: null,
+    refund_account: null, refund: null, cod_reversed: false, can_cancel: false, can_ship_back: false, can_escalate: false, processed_at: null, refunded_at: null,
+    created_at: new Date().toISOString(),
+    ...opts,
+  };
+}
+
+const dongTra = (don: OrderResponse) => don.items.map((i) => ({ order_item_id: i.id ?? i.variant_id, name: i.name, color: i.color, size: i.size, quantity: i.quantity, image_url: i.image_url }));
+/* Hạn tính từ lúc nạp trang (không phải ngày cố định của mẫu): đếm ngược trong màn mẫu luôn còn hạn. */
+const SAU = (ngay: number) => new Date(Date.now() + ngay * 86_400_000).toISOString();
+
 export const TRA_HANG_MAU: ReturnRequestResponse[] = [
-  {
-    id: "1", order_code: "DH2608200906", status: "refunded", reason: "Không vừa size", detail: "Size M hơi rộng ở vai, muốn đổi S nhưng đã hết.",
-    reject_reason: null, refund_amount: tien(389_000), created_at: NGAY(20), evidence: [],
-    items: DON_MAU[5].items.map((i) => ({ name: i.name, color: i.color, size: i.size, quantity: i.quantity, image_url: i.image_url })),
-  },
+  /* Đã hoàn xong — COD, hoàn về tài khoản khai. */
+  traMau("1", "DH2608200906", "refunded", {
+    reason_code: "size_issue", reason: "Không vừa size", detail: "Size M hơi rộng ở vai, muốn đổi S nhưng đã hết.",
+    refund_amount: tien(389_000), calculated_refund_amount: tien(389_000), items: dongTra(DON_MAU[5]),
+    approved_at: NGAY(24, 11), shipped_back_at: NGAY(23, 9), carrier: "GHN", tracking_code: "GHN2608230011", received_at: NGAY(21, 15), received_condition: "ok",
+    refund_account: { bank_bin: "970436", bank_name: "Vietcombank", account_number_masked: "****6789", account_name: "NGUYEN VAN AN" },
+    refund: { status: "done", amount: tien(389_000) }, refunded_at: NGAY(20, 10), processed_at: NGAY(20, 10), created_at: NGAY(25),
+  }),
+  /* Shop đã duyệt — tới lượt khách gửi hàng về (có địa chỉ gửi trả). */
+  traMau("2", "DH2609121503", "approved", {
+    reason_code: "not_as_described", reason: "Không đúng mô tả", detail: "Chất vải mỏng hơn ảnh, màu ngả vàng.",
+    refund_amount: tien(259_000), calculated_refund_amount: tien(259_000), items: dongTra(DON_MAU[2]).slice(0, 1),
+    approved_at: NGAY(0, 8), deadline_kind: "ship_back", deadline_at: SAU(6),
+    return_address: { name: "Kho FITLY Official", phone: "0901234567", address: "12 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh" },
+    can_cancel: true, can_ship_back: true, created_at: NGAY(1),
+  }),
+  /* Shop từ chối — khách còn khiếu nại lên sàn được. */
+  traMau("3", "DH2609011201", "rejected", {
+    reason_code: "defective", reason: "Hàng lỗi", detail: "Đường may ở gấu quần bị bung.",
+    refund_amount: tien(425_000), calculated_refund_amount: tien(425_000), items: dongTra(DON_MAU[0]).slice(1),
+    rejected_by: "shop", reject_reason: "Quần đã được giặt và cắt gấu theo yêu cầu khi mua nên không thuộc diện đổi trả.", processed_at: NGAY(1, 9),
+    deadline_kind: "escalate", deadline_at: SAU(2), can_escalate: true, created_at: NGAY(2),
+  }),
+  /* Đơn COD "chưa nhận hàng" đã xong: shop duyệt → ĐẢO ghi thu COD (không có khoản hoàn, không đòi tài khoản) — COD-08b. */
+  traMau("4", "DH2609101906", "refunded", {
+    reason_code: "not_received", require_return: false, reason: "Chưa nhận được hàng", detail: "Đơn báo đã giao nhưng tôi không nhận được gói hàng nào.",
+    refund_amount: tien(0), calculated_refund_amount: tien(Number(DON_MAU[9].total.amount)), items: dongTra(DON_MAU[9]),
+    cod_reversed: true, processed_at: NGAY(3, 11), refunded_at: NGAY(3, 11), created_at: NGAY(5, 14),
+  }),
 ];
 
 export const DANH_GIA_CUA_TOI_MAU: MyReviewResponse[] = [
@@ -105,6 +169,7 @@ export const DON_NHOM_MAU: OrderGroupResponse[] = [
   nhomMau("DHN2609081102", [
     donMau("DH2609081102", "shipping", 7, [dong("dam-suong-nu-basic", 1, "M", 1)], {
       shop_id: "shop-1", shop_name: "FITLY Official", payment_method_code: "cod", payment_status: "paid", tracking_url: "https://tracking.ghn.vn/?order_code=GHN2609081102",
+      carrier: "ghn", carrier_name: "Giao Hàng Nhanh", tracking_code: "GHN2609081102",
       moc: [["pending", 7], ["confirmed", 7], ["packing", 6], ["shipping", 5]],
     }),
   ]),
@@ -114,4 +179,6 @@ export const DON_NHOM_MAU: OrderGroupResponse[] = [
       moc: [["pending", 3], ["confirmed", 3], ["packing", 2], ["shipping", 2], ["delivered", 1]],
     }),
   ]),
+  /* Mỗi đơn mẫu PLAN-0027 một nhóm riêng (danh sách "Tất cả" đi theo ĐƠN CHA). Đọc lại từ DON_MAU để hai nơi không lệch nhau. */
+  ...["DH2609151701", "DH2609141802", "DH2609131805", "DH2609101906"].map((ma) => nhomMau(`DHN${ma.slice(2)}`, [DON_MAU.find((d) => d.code === ma)!])),
 ];

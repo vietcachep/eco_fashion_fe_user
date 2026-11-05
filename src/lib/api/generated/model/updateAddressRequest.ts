@@ -5,12 +5,17 @@
  * Backend sàn thương mại điện tử đa ngành hàng — web bán hàng + web quản trị. Mọi response theo envelope ApiResponse.
  * OpenAPI spec version: 0.1.0
  */
+import type { UpdateAddressRequestAddressSystem } from './updateAddressRequestAddressSystem';
 import type { UpdateAddressRequestDistrictName } from './updateAddressRequestDistrictName';
 import type { UpdateAddressRequestNote } from './updateAddressRequestNote';
 import type { UpdateAddressRequestProvinceCode } from './updateAddressRequestProvinceCode';
 import type { UpdateAddressRequestWardName } from './updateAddressRequestWardName';
 
 export interface UpdateAddressRequest {
+  addressSystem?: UpdateAddressRequestAddressSystem;
+  ghnProvinceId?: number;
+  ghnDistrictId?: number;
+  ghnWardCode?: string;
   recipientName?: string;
   phone?: string;
   /** @nullable */

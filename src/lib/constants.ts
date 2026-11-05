@@ -35,6 +35,8 @@ export const ROUTES = {
   accountAddresses: "/account/addresses",
   accountProfile: "/account/profile",
   accountReturns: "/account/returns",
+  /* Chi tiết một yêu cầu đổi trả / hoàn tiền — tham số là `id` của yêu cầu (thông báo của BE dẫn về danh sách `/account/returns`). */
+  accountReturn: (id: string) => `/account/returns/${id}`,
   accountReviews: "/account/reviews",
   /* Thông báo trong-app của tôi (`GET /notifications`); chuông ở header + menu tài khoản dẫn tới đây. */
   accountNotifications: "/account/notifications",
@@ -92,19 +94,15 @@ export const PAYMENT_METHODS = [
   { code: "cod", label: "Thanh toán khi nhận hàng (COD)", hint: "Trả tiền mặt cho nhân viên giao hàng" },
 ] as const;
 
-/* Lý do huỷ đơn / trả hàng — câu khách chọn được ghi nguyên văn vào lịch sử đơn (chỉ tiếng Việt). */
+/*
+ * PLAN-0040 Tầng 3.1 — lý do KHÁCH chọn khi huỷ đơn / gửi yêu cầu huỷ: BE nhận MÃ chuẩn (`CUSTOMER_CANCEL_REASONS`) + ghi chú tuỳ chọn và tự ghép
+ * "<nhãn>: <ghi chú>" vào lịch sử đơn, nên FE chỉ gửi mã. Nhãn trùng `CANCEL_REASON_LABEL` của BE để khách thấy cùng một chữ ở lịch sử đơn.
+ * Lý do ĐỔI TRẢ là bộ mã khác: xem `features/order/hooks/return-status.ts`.
+ */
 export const CANCEL_REASONS = [
-  "Đổi ý, không muốn mua nữa",
-  "Đặt nhầm màu / size",
-  "Tìm được nơi bán rẻ hơn",
-  "Thời gian giao dự kiến quá lâu",
-  "Lý do khác",
-] as const;
-
-export const RETURN_REASONS = [
-  "Hàng bị hư hỏng khi nhận",
-  "Giao sai sản phẩm",
-  "Không vừa size",
-  "Không giống mô tả",
-  "Lý do khác",
+  { code: "changed_mind", label: "Đổi ý, không muốn mua nữa" },
+  { code: "wrong_address", label: "Nhập sai địa chỉ / thông tin nhận hàng" },
+  { code: "found_cheaper", label: "Tìm được nơi bán giá tốt hơn" },
+  { code: "slow_confirm", label: "Shop xác nhận đơn quá chậm" },
+  { code: "other", label: "Lý do khác" },
 ] as const;

@@ -8,14 +8,22 @@
 import type { AdminShopSummaryResponseBankAccountName } from './adminShopSummaryResponseBankAccountName';
 import type { AdminShopSummaryResponseBankAccountNumberMasked } from './adminShopSummaryResponseBankAccountNumberMasked';
 import type { AdminShopSummaryResponseBankCode } from './adminShopSummaryResponseBankCode';
+import type { AdminShopSummaryResponseBankStatus } from './adminShopSummaryResponseBankStatus';
+import type { AdminShopSummaryResponseBankVerifiedAt } from './adminShopSummaryResponseBankVerifiedAt';
 import type { AdminShopSummaryResponseBannerUrl } from './adminShopSummaryResponseBannerUrl';
 import type { AdminShopSummaryResponseDescription } from './adminShopSummaryResponseDescription';
 import type { AdminShopSummaryResponseLogoUrl } from './adminShopSummaryResponseLogoUrl';
 import type { AdminShopSummaryResponseOwnerEmail } from './adminShopSummaryResponseOwnerEmail';
 import type { AdminShopSummaryResponseOwnerName } from './adminShopSummaryResponseOwnerName';
 import type { AdminShopSummaryResponseRatingAvg } from './adminShopSummaryResponseRatingAvg';
+import type { ShopShippingAddressRequest } from './shopShippingAddressRequest';
 
 export interface AdminShopSummaryResponse {
+  shippingCarrierEnabled?: boolean;
+  /** @nullable */
+  shippingPickup?: ShopShippingAddressRequest | null;
+  /** @nullable */
+  shippingReturn?: ShopShippingAddressRequest | null;
   id: string;
   code: string;
   slug: string;
@@ -30,7 +38,6 @@ export interface AdminShopSummaryResponse {
   statusLabel: string;
   /** % hoa hồng sàn thu */
   commissionRate: string;
-  codEnabled: boolean;
   /** @nullable */
   ratingAvg?: AdminShopSummaryResponseRatingAvg;
   totalProducts: number;
@@ -50,6 +57,15 @@ export interface AdminShopSummaryResponse {
      * @nullable
      */
   bankAccountNumberMasked?: AdminShopSummaryResponseBankAccountNumberMasked;
+  /** Xác minh TK ngân hàng: `pending_verification` = tên chủ TK lệch tên chủ shop — kỳ chi trả bị giữ (held) cho tới khi quản lý sàn xác minh */
+  bankStatus: AdminShopSummaryResponseBankStatus;
+  /**
+     * Lúc quản lý sàn xác minh TK (null = chưa xác minh tay). Từ mốc này mới đếm số giờ giữ chi trả sau đổi TK
+     * @nullable
+     */
+  bankVerifiedAt?: AdminShopSummaryResponseBankVerifiedAt;
+  /** Số giờ sàn tạm giữ chi trả sau khi đổi TK ngân hàng (setting `payout.bank_change_hold_hours`) — FE hiển thị đúng con số này, không ghi cứng */
+  bankChangeHoldHours: number;
   createdAt: string;
   updatedAt: string;
   /**

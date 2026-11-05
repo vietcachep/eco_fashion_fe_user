@@ -2,10 +2,13 @@ import { useCartStore, chonTamTinh } from "@/stores/cart-store";
 import { useAddressStore } from "@/stores/address-store";
 import { useAuthStore } from "@/stores/auth-store";
 import { soTienGiam, timMa } from "@/features/promotion/mock/vouchers";
-import { DANH_GIA_CUA_TOI_MAU, DON_MAU, DON_NHOM_MAU, TRA_HANG_MAU, tien } from "@/features/order/mock/orders";
+import { DANH_GIA_CUA_TOI_MAU, DON_MAU, DON_NHOM_MAU, TRA_HANG_MAU, tien, traMau } from "@/features/order/mock/orders";
+import { LY_DO_TRA } from "@/features/order/hooks/return-status";
 import type { MediaItem } from "@/types/common";
+import { CANCEL_REASONS } from "@/lib/constants";
 import type {
-  CheckoutSummaryResponse, CreateOrderRequest, MyReviewResponse, OrderResponse, OrderStatus, ReturnRequestResponse, OrderGroupResponse,
+  CancelOrderBody, ChangeOrderAddressBody, CheckoutSummaryResponse, CreateOrderRequest, CreateReturnRequest, MyReviewResponse, OrderResponse, OrderStatus, ReturnRequestResponse,
+  ShipBackReturnRequest, OrderGroupResponse,
 } from "@/features/order/types";
 
 /*
@@ -15,7 +18,7 @@ import type {
  */
 const KHOA_DON = "fashion-mock-orders";
 const KHOA_DON_NHOM = "fashion-mock-order-groups";
-const KHOA_TRA = "fashion-mock-returns";
+const KHOA_TRA = "fashion-mock-returns-v2";
 const KHOA_DANH_GIA = "fashion-mock-my-reviews";
 const NGUONG_FREESHIP = 500_000;
 const PHI_SHIP = 30_000;
@@ -200,47 +203,172 @@ function chuyen(code: string, to: OrderStatus, note: string | null, them?: Parti
   return moi;
 }
 
-/* Chỉ `pending` mới huỷ được — bám lưới chuyển của backend (ORDER_CANNOT_CANCEL). */
-export async function mockCancelOrder(code: string, reason: string): Promise<OrderResponse> {
+/* Cùng cách BE ghép lý do huỷ vào lịch sử: "<nhãn lý do>: <ghi chú>". */
+function lyDoHuyHienThi(body: CancelOrderBody): string {
+  const nhan = CANCEL_REASONS.find((r) => r.code === body.reason_code)?.label ?? body.reason_code;
+  return [nhan, body.note?.trim()].filter(Boolean).join(": ");
+}
+
+/*
+ * Khách huỷ TỨC THÌ ở `pending` và `confirmed` (PLAN-0027, CAN-03) — bám lưới huỷ của backend. Đơn đang đóng gói ⇒ lỗi gợi ý gửi yêu cầu huỷ (backend thật kèm
+ * `details.hint = "cancel_request"`; máy chủ mẫu không có mã lỗi nên màn mẫu dựa vào cờ suy từ trạng thái để hiện đúng nút ngay từ đầu).
+ */
+export async function mockCancelOrder(code: string, body: CancelOrderBody): Promise<OrderResponse> {
   await cho(400);
   const don = tatCaDon().find((d) => d.code === code);
   if (!don) throw new Error("Không tìm thấy đơn hàng");
-  if (don.status !== "pending") throw new Error("Đơn đã được xác nhận, không tự huỷ được — liên hệ hotline 1900 1234");
-  return chuyen(code, "cancelled", reason, { payment_status: don.payment_status === "paid" ? "refunded" : don.payment_status });
+  if (don.status === "packing") throw new Error("Đơn đang được đóng gói — hãy gửi yêu cầu huỷ để shop xem xét");
+  if (don.status !== "pending" && don.status !== "confirmed") throw new Error("Đơn không còn huỷ được");
+  return chuyen(code, "cancelled", lyDoHuyHienThi(body), {
+    payment_status: don.payment_status === "paid" ? "refunded" : don.payment_status,
+    cancel_reason: lyDoHuyHienThi(body), cancel_reason_code: body.reason_code, cancelled_by: "customer",
+  });
+}
+
+/* Yêu cầu huỷ khi `packing`: mỗi đơn MỘT yêu cầu; mẫu không có shop để chấp nhận / từ chối nên yêu cầu nằm ở `pending` (hạn 24 giờ như setting mặc định). */
+export async function mockRequestCancelOrder(code: string, body: CancelOrderBody): Promise<OrderResponse> {
+  await cho(400);
+  const don = tatCaDon().find((d) => d.code === code);
+  if (!don) throw new Error("Không tìm thấy đơn hàng");
+  if (don.status === "pending" || don.status === "confirmed") throw new Error("Đơn chưa đóng gói — bạn có thể huỷ trực tiếp, không cần gửi yêu cầu");
+  if (don.status !== "packing") throw new Error("Không gửi được yêu cầu huỷ cho đơn ở trạng thái này");
+  if (don.cancel_request) throw new Error("Bạn đã gửi yêu cầu huỷ cho đơn này");
+  const bay = new Date();
+  const nhan = CANCEL_REASONS.find((r) => r.code === body.reason_code)?.label ?? body.reason_code;
+  return chuyen(code, "packing", `Khách yêu cầu huỷ đơn: ${lyDoHuyHienThi(body)}`, {
+    cancel_request: {
+      status: "pending", reason_code: body.reason_code, reason_label: nhan, note: body.note?.trim() || null,
+      requested_at: bay.toISOString(), due_at: new Date(bay.getTime() + 24 * 3_600_000).toISOString(), reject_reason: null,
+    },
+  });
+}
+
+/* Đổi địa chỉ khi `pending` / `confirmed`; tỉnh/thành giữ nguyên (phí ship không tính lại). */
+export async function mockChangeOrderAddress(code: string, body: Extract<ChangeOrderAddressBody, { recipient_name: string }>): Promise<OrderResponse> {
+  await cho(400);
+  const don = tatCaDon().find((d) => d.code === code);
+  if (!don) throw new Error("Không tìm thấy đơn hàng");
+  if (don.status !== "pending" && don.status !== "confirmed") throw new Error("Đơn đang được đóng gói nên không đổi được địa chỉ — hãy liên hệ shop hoặc gửi yêu cầu huỷ đơn");
+  const diaChiMoi = [body.address_line, body.ward, body.district, body.province].map((x) => x?.trim()).filter(Boolean).join(", ");
+  return chuyen(code, don.status, `Khách đổi thông tin nhận hàng: ${don.recipient_name}, ${don.recipient_phone}, ${don.shipping_address} → ${body.recipient_name}, ${body.recipient_phone}, ${diaChiMoi}`, {
+    recipient_name: body.recipient_name.trim(), recipient_phone: body.recipient_phone.trim(), shipping_address: diaChiMoi,
+  });
 }
 
 export async function mockConfirmReceived(code: string): Promise<OrderResponse> {
   await cho(400);
   const don = tatCaDon().find((d) => d.code === code);
   if (!don || don.status !== "delivered") throw new Error("Đơn chưa ở trạng thái đã giao");
-  return chuyen(code, "completed", null, { payment_status: "paid" });
+  if (tatCaTra().some((r) => r.order_code === code && TRANG_THAI_MO.includes(r.status))) throw new Error("Đơn đang có yêu cầu đổi trả / báo chưa nhận hàng chưa xử lý xong — chưa xác nhận đã nhận hàng được");
+  return chuyen(code, "completed", "Khách xác nhận đã nhận hàng", { payment_status: "paid" });
 }
 
-export async function mockRequestReturn(code: string, body: { reason: string; detail?: string; variant_ids: string[]; evidence: MediaItem[] }): Promise<ReturnRequestResponse> {
+/*
+ * ĐỔI TRẢ ở chế độ mẫu: máy chủ mẫu chỉ đóng vai KHÁCH (tạo / rút / báo gửi hàng / khiếu nại). Không có shop hay sàn để duyệt nên yêu cầu
+ * tự tạo nằm ở `requested`; muốn xem các trạng thái khác dùng bản ghi mẫu của tài khoản demo (`TRA_HANG_MAU`). Cờ hành động + hạn do
+ * `capNhatCoTra` dựng — đóng vai server, giống hợp đồng PLAN-0022 (FE thật không suy những thứ này).
+ * Khoá riêng `-v2`: bản ghi cũ trong localStorage (trước PLAN-0022) thiếu hạn chót / lý do chuẩn nên không đọc lại.
+ */
+const NGAY_MS = 86_400_000;
+const TRANG_THAI_MO = ["requested", "approved", "escalated", "received"];
+
+function tatCaTra(): ReturnRequestResponse[] {
+  const rieng = doc<ReturnRequestResponse[]>(KHOA_TRA, []);
+  const mau = laDemo() ? TRA_HANG_MAU.filter((m) => !rieng.some((r) => r.id === m.id)) : [];
+  return [...rieng, ...mau].sort((a, b) => b.created_at.localeCompare(a.created_at));
+}
+
+function luuTra(r: ReturnRequestResponse): ReturnRequestResponse {
+  ghi(KHOA_TRA, [r, ...doc<ReturnRequestResponse[]>(KHOA_TRA, []).filter((x) => x.id !== r.id)]);
+  return r;
+}
+
+function timTra(id: string): ReturnRequestResponse {
+  const r = tatCaTra().find((x) => x.id === id);
+  if (!r) throw new Error("Không tìm thấy yêu cầu đổi trả");
+  return r;
+}
+
+/* Đóng vai server: tính lại 3 cờ hành động của khách từ trạng thái hiện tại. */
+function capNhatCoTra(r: ReturnRequestResponse): ReturnRequestResponse {
+  const chuaGui = r.shipped_back_at === null;
+  return {
+    ...r,
+    can_cancel: r.status === "requested" || (r.status === "approved" && chuaGui),
+    can_ship_back: r.status === "approved" && r.require_return && chuaGui,
+    can_escalate: r.status === "rejected" && r.rejected_by === "shop" && r.deadline_kind === "escalate",
+  };
+}
+
+export async function mockRequestReturn(code: string, body: CreateReturnRequest): Promise<ReturnRequestResponse> {
   await cho(500);
   const don = tatCaDon().find((d) => d.code === code);
-  if (!don || (don.status !== "delivered" && don.status !== "completed")) throw new Error("Đơn chưa giao xong, chưa thể yêu cầu trả");
-  const items = don.items.filter((i) => body.variant_ids.includes(i.variant_id));
-  if (items.length === 0) throw new Error("Chọn ít nhất một sản phẩm muốn trả");
-  /* Minh chứng bắt buộc — cửa hàng duyệt dựa trên ảnh/video, không có thì không xét. */
-  if (!body.evidence?.length) throw new Error("Đính kèm ít nhất một ảnh hoặc video minh chứng tình trạng hàng");
-  const ds = doc<ReturnRequestResponse[]>(KHOA_TRA, []);
-  const yc: ReturnRequestResponse = {
-    id: String((Number(ds[0]?.id) || TRA_HANG_MAU.length) + 1), order_code: code, status: "requested", reason: body.reason, detail: body.detail?.trim() || null,
-    reject_reason: null, refund_amount: tien(items.reduce((t, i) => t + Number(i.line_total.amount), 0)),
-    items: items.map((i) => ({ name: i.name, color: i.color, size: i.size, quantity: i.quantity, image_url: i.image_url })),
+  if (!don) throw new Error("Không tìm thấy đơn hàng");
+  const khongNhan = body.reason_code === "not_received";
+  if (khongNhan ? don.status !== "shipping" && don.status !== "delivered" : don.status !== "delivered" && don.status !== "completed") {
+    throw new Error(khongNhan ? "Chỉ báo chưa nhận hàng được khi đơn đang giao hoặc vừa báo đã giao" : "Chỉ đổi trả được đơn đã giao");
+  }
+  if (tatCaTra().some((r) => r.order_code === code && TRANG_THAI_MO.includes(r.status))) throw new Error("Đơn này đã có yêu cầu đổi trả đang xử lý");
+  const chon = khongNhan ? don.items.map((i) => ({ i, quantity: i.quantity })) : body.items.flatMap((b) => {
+    const i = don.items.find((x) => (x.id ?? x.variant_id) === b.order_item_id);
+    return i ? [{ i, quantity: Math.min(b.quantity, i.quantity) }] : [];
+  });
+  if (chon.length === 0) throw new Error("Chọn ít nhất một sản phẩm cần trả");
+  /* Minh chứng bắt buộc trừ "chưa nhận hàng" — shop duyệt dựa trên ảnh/video. */
+  if (!khongNhan && !body.evidence?.length) throw new Error("Cần ít nhất một ảnh/video minh chứng");
+  const daThu = don.payment_status === "paid" || don.payment_status === "partially_refunded";
+  /* COD-08b: "chưa nhận hàng" trên đơn COD KHÔNG đòi tài khoản (khách chưa trả tiền mặt → chỉ đảo ghi thu, không hoàn tiền). */
+  if (don.payment_method_code === "cod" && daThu && !khongNhan && !body.refund_account) throw new Error("Đơn thanh toán khi nhận hàng cần khai tài khoản ngân hàng để nhận tiền hoàn");
+  const hoan = khongNhan ? Number(don.total.amount) : chon.reduce((t, { i, quantity }) => t + Number(i.unit_price.amount) * quantity, 0);
+  const acc = body.refund_account;
+  return luuTra(capNhatCoTra({
+    ...traMau(`tra-${Date.now().toString(36)}`, code, "requested"),
+    shop_id: don.shop_id, shop_name: don.shop_name,
+    reason_code: body.reason_code, require_return: !khongNhan, reason: body.reason?.trim() || LY_DO_TRA[body.reason_code], detail: body.detail?.trim() || null,
+    refund_amount: tien(hoan), calculated_refund_amount: tien(hoan),
+    items: chon.map(({ i, quantity }) => ({ order_item_id: i.id ?? i.variant_id, name: i.name, color: i.color, size: i.size, quantity, image_url: i.image_url })),
     evidence: body.evidence,
+    deadline_kind: "shop_respond", deadline_at: new Date(Date.now() + 72 * 3_600_000).toISOString(),
+    refund_account: acc && !khongNhan ? { bank_bin: acc.bank_bin, bank_name: acc.bank_name ?? null, account_number_masked: `****${acc.account_number.slice(-4)}`, account_name: acc.account_name } : null,
     created_at: new Date().toISOString(),
-  };
-  ghi(KHOA_TRA, [yc, ...ds]);
-  chuyen(code, "returned", `Yêu cầu trả hàng: ${body.reason}`);
-  return yc;
+  }));
 }
 
-/* Bản ghi cũ trong localStorage (trước khi có ảnh/video) thiếu trường — điền mặc định khi đọc. */
 export async function mockListReturns(): Promise<ReturnRequestResponse[]> {
   await cho(200);
-  return [...doc<ReturnRequestResponse[]>(KHOA_TRA, []), ...(laDemo() ? TRA_HANG_MAU : [])].map((r) => ({ ...r, evidence: r.evidence ?? [] }));
+  return tatCaTra();
+}
+
+export async function mockGetReturn(id: string): Promise<ReturnRequestResponse | null> {
+  await cho(200);
+  return tatCaTra().find((r) => r.id === id) ?? null;
+}
+
+export async function mockShipBackReturn(id: string, body: ShipBackReturnRequest): Promise<ReturnRequestResponse> {
+  await cho(400);
+  const r = timTra(id);
+  if (!r.can_ship_back) throw new Error("Chỉ báo đã gửi hàng khi shop đã duyệt yêu cầu trả hàng và bạn chưa báo gửi");
+  const bay = new Date();
+  return luuTra(capNhatCoTra({
+    ...r, carrier: body.carrier, tracking_code: body.tracking_code, shipped_back_at: bay.toISOString(),
+    deadline_kind: "shop_receive", deadline_at: new Date(bay.getTime() + 5 * NGAY_MS).toISOString(),
+  }));
+}
+
+export async function mockCancelReturn(id: string): Promise<ReturnRequestResponse> {
+  await cho(400);
+  const r = timTra(id);
+  if (!r.can_cancel) throw new Error("Chỉ rút được yêu cầu khi bạn chưa gửi hàng trả");
+  return luuTra(capNhatCoTra({ ...r, status: "cancelled", deadline_kind: null, deadline_at: null, processed_at: new Date().toISOString() }));
+}
+
+export async function mockEscalateReturn(id: string, reason: string): Promise<ReturnRequestResponse> {
+  await cho(400);
+  const r = timTra(id);
+  if (!r.can_escalate) throw new Error("Chỉ khiếu nại được khi shop đã từ chối yêu cầu và còn trong hạn khiếu nại");
+  return luuTra(capNhatCoTra({
+    ...r, status: "escalated", escalate_source: "customer", escalate_reason: reason, escalated_at: new Date().toISOString(), deadline_kind: null, deadline_at: null,
+  }));
 }
 
 export async function mockListMyReviews(): Promise<MyReviewResponse[]> {

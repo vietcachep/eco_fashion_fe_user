@@ -15,6 +15,10 @@ export interface Address {
   ward: string;
   street: string;
   isDefault: boolean;
+  addressSystem?: "legacy_3level";
+  ghnProvinceId?: number;
+  ghnDistrictId?: number;
+  ghnWardCode?: string;
 }
 
 export type AddressInputData = Omit<Address, "id">;

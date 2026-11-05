@@ -7,9 +7,9 @@
  */
 
 export interface ProcessRefundRequest {
-  /** Mã tham chiếu chuyển khoản (bắt buộc khi hoàn tay). Với refund VNPay `failed` chưa rõ kết quả (needsReconcile): mã giao dịch hoàn trên cổng — ghi sổ, KHÔNG gọi cổng. */
+  /** Mã giao dịch chuyển khoản (bắt buộc khi hoàn tay — đơn COD khi chưa cấu hình payout, thiếu tài khoản nhận, refund lịch sử qua cổng cũ): ghi sổ, KHÔNG gọi cổng. 4–120 ký tự chữ-số và `. _ : / # -`, DUY NHẤT toàn hệ thống (trùng ⇒ 409 REFUND_PROVIDER_REF_DUPLICATE), không mở đầu bằng `payos-refund:`. */
   providerRef?: string;
   note?: string;
-  /** Chỉ dùng cho refund VNPay `failed` chưa rõ kết quả (needsReconcile): đã đối chiếu trên cổng và xác nhận CHƯA hoàn ⇒ cho phép gọi lại cổng. */
-  confirmGatewayNotRefunded?: boolean;
+  /** Chỉ dùng khi hoàn tay một khoản có lệnh chi PayOS ở trạng thái KHÔNG RÕ mà hệ thống KHÔNG tra được PayOS: kế toán xác nhận đã đối chiếu trên bảng điều khiển PayOS và lệnh CHƯA chạy. PayOS tra được và ĐÃ nhận lệnh ⇒ luôn bị chặn 409. */
+  confirmGatewayNotExecuted?: boolean;
 }

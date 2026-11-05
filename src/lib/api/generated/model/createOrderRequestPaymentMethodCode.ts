@@ -7,7 +7,7 @@
  */
 
 /**
- * `cod` | `payos`
+ * Chỉ còn `cod` (shipper thu hộ cho sàn) hoặc `payos`
  */
 export type CreateOrderRequestPaymentMethodCode = typeof CreateOrderRequestPaymentMethodCode[keyof typeof CreateOrderRequestPaymentMethodCode];
 

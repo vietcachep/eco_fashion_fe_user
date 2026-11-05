@@ -8,12 +8,20 @@
 import type { ShopResponseBankAccountName } from './shopResponseBankAccountName';
 import type { ShopResponseBankAccountNumberMasked } from './shopResponseBankAccountNumberMasked';
 import type { ShopResponseBankCode } from './shopResponseBankCode';
+import type { ShopResponseBankStatus } from './shopResponseBankStatus';
+import type { ShopResponseBankVerifiedAt } from './shopResponseBankVerifiedAt';
 import type { ShopResponseBannerUrl } from './shopResponseBannerUrl';
 import type { ShopResponseDescription } from './shopResponseDescription';
 import type { ShopResponseLogoUrl } from './shopResponseLogoUrl';
 import type { ShopResponseRatingAvg } from './shopResponseRatingAvg';
+import type { ShopShippingAddressRequest } from './shopShippingAddressRequest';
 
 export interface ShopResponse {
+  shippingCarrierEnabled?: boolean;
+  /** @nullable */
+  shippingPickup?: ShopShippingAddressRequest | null;
+  /** @nullable */
+  shippingReturn?: ShopShippingAddressRequest | null;
   id: string;
   code: string;
   slug: string;
@@ -28,7 +36,6 @@ export interface ShopResponse {
   statusLabel: string;
   /** % hoa hồng sàn thu */
   commissionRate: string;
-  codEnabled: boolean;
   /** @nullable */
   ratingAvg?: ShopResponseRatingAvg;
   totalProducts: number;
@@ -48,6 +55,15 @@ export interface ShopResponse {
      * @nullable
      */
   bankAccountNumberMasked?: ShopResponseBankAccountNumberMasked;
+  /** Xác minh TK ngân hàng: `pending_verification` = tên chủ TK lệch tên chủ shop — kỳ chi trả bị giữ (held) cho tới khi quản lý sàn xác minh */
+  bankStatus: ShopResponseBankStatus;
+  /**
+     * Lúc quản lý sàn xác minh TK (null = chưa xác minh tay). Từ mốc này mới đếm số giờ giữ chi trả sau đổi TK
+     * @nullable
+     */
+  bankVerifiedAt?: ShopResponseBankVerifiedAt;
+  /** Số giờ sàn tạm giữ chi trả sau khi đổi TK ngân hàng (setting `payout.bank_change_hold_hours`) — FE hiển thị đúng con số này, không ghi cứng */
+  bankChangeHoldHours: number;
   createdAt: string;
   updatedAt: string;
 }

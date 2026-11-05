@@ -39,6 +39,7 @@ export function CheckoutShopGroup({ nhom, tien, dangTinh, coTach }: { nhom: Nhom
         })}
       </ul>
       <dl className="m-0 px-3 py-2 border-top d-grid gap-6 text-sm">
+        {tien?.fulfilment_mode === "carrier" && <div className="d-flex justify-content-between"><dt className="fw-normal text-main">Vận chuyển</dt><dd className="m-0">GHN{tien.shipping_fee_source === "fake" ? " · Giả lập" : ""}</dd></div>}
         <div className="d-flex justify-content-between"><dt className="fw-normal text-main">Tạm tính{tien ? ` (${tien.item_count} món)` : ""}</dt><dd className="m-0 fw-medium"><ServerMoney money={tien?.subtotal} dangTinh={dangTinh} /></dd></div>
         <div className="d-flex justify-content-between"><dt className="fw-normal text-main">Phí vận chuyển</dt><dd className="m-0 fw-medium"><ServerMoney money={tien?.shipping_fee} mienPhi dangTinh={dangTinh} /></dd></div>
         {tien && Number(tien.discount.amount) > 0 && (
@@ -46,6 +47,7 @@ export function CheckoutShopGroup({ nhom, tien, dangTinh, coTach }: { nhom: Nhom
         )}
         <div className="d-flex justify-content-between border-top pt-2"><dt className="fw-medium">Thành tiền{coTach ? " đơn này" : ""}</dt><dd className="m-0 fw-semibold text-primary"><ServerMoney money={tien?.total} dangTinh={dangTinh} /></dd></div>
       </dl>
+      {tien?.shipping_fee_source === "fallback" && <p className="text-xs text-main px-3 pb-2 mb-0">Phí vận chuyển ước tính — hãng đang tạm thời chưa trả được báo giá.</p>}
     </div>
   );
 }

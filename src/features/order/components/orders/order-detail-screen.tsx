@@ -22,19 +22,23 @@ export function OrderDetailScreen({ code, panel }: { code: string; panel?: strin
 }
 
 function GroupDetail({ code }: { code: string }) {
-  const { data: nhom, isPending, isError, error, refetch } = useOrderGroup(code);
+  const { data: nhom, isPending, isError, error, refetch, isFetching } = useOrderGroup(code, { lamMoiKhiQuayLai: true });
   if (isPending) return <DetailSkeleton />;
   if (isError) return <DetailError message={apiErrorMessage(error, "Không tải được đơn hàng.")} onRetry={() => void refetch()} />;
   if (!nhom) return <DetailNotFound />;
-  return <GroupBody nhom={nhom} />;
+  return <><RefreshOrderButton loading={isFetching} onRefresh={() => void refetch()} /><GroupBody nhom={nhom} /></>;
 }
 
 function ChildDetail({ code, panel }: { code: string; panel?: string }) {
-  const { data: order, isPending, isError, error, refetch } = useOrder(code);
+  const { data: order, isPending, isError, error, refetch, isFetching } = useOrder(code);
   if (isPending) return <DetailSkeleton />;
   if (isError) return <DetailError message={apiErrorMessage(error, "Không tải được đơn hàng.")} onRetry={() => void refetch()} />;
   if (!order) return <DetailNotFound />;
-  return <ChildBody order={order} panel={panel} />;
+  return <><RefreshOrderButton loading={isFetching} onRefresh={() => void refetch()} /><ChildBody order={order} panel={panel} /></>;
+}
+
+function RefreshOrderButton({ loading, onRefresh }: { loading: boolean; onRefresh: () => void }) {
+  return <div className="d-flex justify-content-end mb_12"><button type="button" className="tf-btn btn-out-line-dark btn-xs" disabled={loading} onClick={onRefresh}>{loading ? "Đang cập nhật..." : "Làm mới trạng thái"}</button></div>;
 }
 
 function BackLink() {

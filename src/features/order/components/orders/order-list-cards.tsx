@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { ROUTES } from "@/lib/constants";
 import { formatDate, formatMoney } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { PayOrderButton } from "@/features/payment/components/pay-order-button";
 import { canPayOnline } from "@/features/payment/hooks/use-pay-order";
-import { canCancelOrder, canReturnOrder } from "@/features/order/hooks/order-status";
+import { canCancelOrder, canReportNotReceivedOrder, canRequestCancelOrder, canReturnOrder, nhanYeuCauHuy } from "@/features/order/hooks/order-status";
 import { OrderStatusBadge, PaymentStatusBadge } from "@/features/order/components/orders/order-status-badge";
 import { OrderThumb } from "@/features/order/components/orders/order-thumb";
 import { ShopLink } from "@/features/order/components/orders/shop-link";
@@ -15,7 +16,7 @@ import { nhanBienThe } from "@/stores/cart-store";
  *   · `OrderGroupCard` (tab "Tất cả"): một ĐƠN CHA — mã, ngày, số gian hàng, tổng cả nhóm — chứa tóm tắt từng đơn con;
  *     bấm "Xem chi tiết" sang trang đơn cha. Không có nút huỷ/trả hàng cho cả nhóm (mỗi shop xử lý riêng, ở trang chi tiết).
  *   · `ChildOrderCard` (tab theo trạng thái): một ĐƠN CON khớp trạng thái, vì trạng thái là của từng đơn con chứ không của nhóm.
- *     Nút tắt Trả hàng / Huỷ dẫn tới chi tiết đơn con và mở sẵn bảng tương ứng.
+ *     Nút tắt Trả hàng / Huỷ (hoặc Yêu cầu huỷ khi shop đang đóng gói) dẫn tới chi tiết đơn con và mở sẵn bảng tương ứng.
  * Danh sách chỉ tóm tắt (tối đa 3 dòng hàng mỗi đơn) để trang nhẹ; đủ hàng + hành trình + tiền chi tiết ở trang chi tiết.
  */
 const SO_DONG_TOI_DA = 3;
@@ -24,6 +25,7 @@ function SubOrderSummary({ order, hienMa = true }: { order: OrderResponse; hienM
   const hien = order.items.slice(0, SO_DONG_TOI_DA);
   const them = order.items.length - hien.length;
   const tongSoLuong = order.items.reduce((n, i) => n + i.quantity, 0);
+  const huyBadge = nhanYeuCauHuy(order.cancel_request);
   return (
     <div>
       <div className="order-card-body d-flex flex-wrap align-items-center gap-8 pb-0">
@@ -31,7 +33,8 @@ function SubOrderSummary({ order, hienMa = true }: { order: OrderResponse; hienM
         {hienMa && <span className="text-xs text-main font-mono">{order.code}</span>}
         <span className="ms-auto d-flex flex-wrap gap-6">
           <OrderStatusBadge status={order.status} />
-          <PaymentStatusBadge status={order.payment_status} />
+          <PaymentStatusBadge status={order.payment_status} refund={order.refund} carrierCodStatus={order.carrier_cod_status} />
+          {huyBadge && <span className={cn("status-badge", `is-${huyBadge.mau}`)}>{huyBadge.label}</span>}
         </span>
       </div>
 
@@ -92,8 +95,10 @@ export function ChildOrderCard({ order }: { order: OrderResponse }) {
       <SubOrderSummary order={order} hienMa={false} />
       <div className="order-card-actions">
         <Link href={chiTiet} className="tf-btn btn-out-line-dark btn-xs">Xem chi tiết <i className="icon icon-arr-right" /></Link>
-        {canReturnOrder(order) && <Link href={`${chiTiet}?panel=return`} className="tf-btn btn-out-line-dark btn-xs">Trả hàng / hoàn tiền</Link>}
+        {canReturnOrder(order) && <Link href={`${chiTiet}?panel=return`} className="tf-btn btn-out-line-dark btn-xs">Yêu cầu đổi trả</Link>}
+        {canReportNotReceivedOrder(order) && <Link href={`${chiTiet}?panel=not-received`} className="tf-btn btn-out-line-dark btn-xs">Báo chưa nhận hàng</Link>}
         {canCancelOrder(order) && <Link href={`${chiTiet}?panel=cancel`} className="tf-btn btn-out-line-dark btn-xs">Huỷ đơn</Link>}
+        {!canCancelOrder(order) && canRequestCancelOrder(order) && <Link href={`${chiTiet}?panel=cancel`} className="tf-btn btn-out-line-dark btn-xs">Yêu cầu huỷ đơn</Link>}
         {muaLai && <Link href={ROUTES.product(muaLai.slug)} className="tf-btn btn-out-line-dark btn-xs">Mua lại</Link>}
       </div>
     </article>

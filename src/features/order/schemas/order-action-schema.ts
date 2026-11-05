@@ -1,43 +1,43 @@
 import { z } from "zod";
-import { CANCEL_REASONS, RETURN_REASONS } from "@/lib/constants";
+import { CANCEL_REASONS } from "@/lib/constants";
+import { VN_PHONE } from "@/features/order/schemas/checkout-schema";
 
 /*
- * Validation của ba hành động khách làm trên MỘT đơn con: huỷ · trả hàng · đánh giá. Giới hạn độ dài khớp DTO của backend
- * (`CancelOrderRequest.reason` 3–255, `CreateReturnRequest.reason` 3–255 / `detail` ≤ 1000 / `evidence` 1–6,
- * `CreateReviewRequest.content` 10–2000 / `media` ≤ 5) để lỗi hiện ngay dưới ô nhập thay vì chờ BE trả 400.
+ * Validation của các hành động khách làm trên MỘT đơn con: huỷ / yêu cầu huỷ · đổi địa chỉ · đánh giá (đổi trả có schema riêng ở `return-schema.ts`). Giới hạn
+ * độ dài khớp DTO của backend (`CancelOrderRequest` / `CancelOrderRequestRequest` note ≤ 255 · 500, `ChangeOrderAddressRequest`, `CreateReviewRequest.content`
+ * 10–2000 / `media` ≤ 5) để lỗi hiện ngay dưới ô nhập thay vì chờ BE trả 400.
  */
-const LY_DO_KHAC = "Lý do khác" satisfies (typeof CANCEL_REASONS)[number] & (typeof RETURN_REASONS)[number];
+const MA_LY_DO_HUY = CANCEL_REASONS.map((r) => r.code) as [(typeof CANCEL_REASONS)[number]["code"], ...(typeof CANCEL_REASONS)[number]["code"][]];
 
-/* Ảnh/video đã chọn (data URL xem trước; `uploadMedia` đẩy lên server khi gửi). */
-const mediaSchema = z.object({ type: z.enum(["image", "video"]), url: z.string().min(1), name: z.string().min(1) });
+/* Ảnh/video đã chọn (data URL xem trước; `uploadMedia` đẩy lên server khi gửi) — dùng chung với schema đổi trả. */
+export const mediaSchema = z.object({ type: z.enum(["image", "video"]), url: z.string().min(1), name: z.string().min(1) });
 
-/* "Lý do khác" bắt buộc khách tự viết — chọn nguyên chữ "Lý do khác" thì cửa hàng không biết gì để xử lý. */
-const canLyDoRieng = (reason: string, text: string, min: number) => reason === LY_DO_KHAC && text.length < min;
-
+/*
+ * Huỷ đơn / yêu cầu huỷ dùng CHUNG một form: mã lý do (bắt buộc) + ghi chú. "Lý do khác" bắt buộc khách tự viết — chọn nguyên chữ "Lý do khác" thì shop không
+ * biết gì để xử lý. Ghi chú tối đa 255 ký tự (giới hạn thấp hơn của hai route: huỷ thẳng 255, yêu cầu huỷ 500).
+ */
 export const cancelOrderSchema = z
   .object({
-    reason: z.enum(CANCEL_REASONS, { errorMap: () => ({ message: "Chọn lý do huỷ đơn" }) }),
-    note: z.string().trim().max(230, "Tối đa 230 ký tự"),
+    reasonCode: z.enum(MA_LY_DO_HUY, { errorMap: () => ({ message: "Chọn lý do huỷ đơn" }) }),
+    note: z.string().trim().max(255, "Tối đa 255 ký tự"),
   })
   .superRefine((v, ctx) => {
-    if (canLyDoRieng(v.reason, v.note, 3)) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["note"], message: "Nhập lý do của bạn (ít nhất 3 ký tự)" });
+    if (v.reasonCode === "other" && v.note.length < 3) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["note"], message: "Nhập lý do của bạn (ít nhất 3 ký tự)" });
   });
 export type CancelOrderInput = z.infer<typeof cancelOrderSchema>;
 
-/* BE chỉ có MỘT ô `reason` (3–255 ký tự): lý do tự viết ghép vào sau nhãn để cửa hàng đọc đủ ý. */
-export const lyDoHuyGuiDi = (v: CancelOrderInput) => (v.reason === LY_DO_KHAC ? `${LY_DO_KHAC}: ${v.note}` : v.reason);
-
-export const returnRequestSchema = z
-  .object({
-    variantIds: z.array(z.string()).min(1, "Chọn ít nhất một sản phẩm muốn trả"),
-    reason: z.enum(RETURN_REASONS, { errorMap: () => ({ message: "Chọn lý do trả hàng" }) }),
-    detail: z.string().trim().max(1000, "Tối đa 1000 ký tự"),
-    evidence: z.array(mediaSchema).min(1, "Đính kèm ít nhất một ảnh hoặc video minh chứng").max(5, "Tối đa 5 tệp"),
-  })
-  .superRefine((v, ctx) => {
-    if (canLyDoRieng(v.reason, v.detail, 5)) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["detail"], message: "Mô tả lý do để cửa hàng xử lý (ít nhất 5 ký tự)" });
-  });
-export type ReturnRequestInput = z.infer<typeof returnRequestSchema>;
+/*
+ * Đổi địa chỉ nhận của đơn chưa đóng gói. Tỉnh/thành KHÔNG sửa được (phí ship tính theo tỉnh lúc đặt, BE không tính lại → 409), nên không có trong form:
+ * màn gửi đúng tỉnh/thành của đơn. SĐT theo đầu số di động VN như sổ địa chỉ.
+ */
+export const changeAddressSchema = z.object({
+  recipientName: z.string().trim().min(2, "Nhập họ tên người nhận").max(120, "Họ tên quá dài"),
+  recipientPhone: z.string().trim().regex(VN_PHONE, "Số điện thoại không hợp lệ"),
+  addressLine: z.string().trim().min(3, "Nhập số nhà, tên đường").max(255, "Địa chỉ quá dài"),
+  ward: z.string().trim().max(100, "Tối đa 100 ký tự"),
+  district: z.string().trim().max(100, "Tối đa 100 ký tự"),
+});
+export type ChangeAddressInput = z.infer<typeof changeAddressSchema>;
 
 export const reviewSchema = z.object({
   rating: z.number().int().min(1, "Chọn số sao").max(5),

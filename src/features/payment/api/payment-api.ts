@@ -31,8 +31,9 @@ export async function listPaymentMethods(): Promise<PaymentMethodOption[]> {
 }
 
 /*
- * Lấy LINK THANH TOÁN MỚI cho một đơn CON còn chờ thanh toán (link cũ hết hạn sau 30 phút / đã huỷ trên cổng).
- * `orderCode` = mã đơn con (DH…). BE chặn: 10 lần/10 phút/người; đơn đã trả/đã huỷ → lỗi có chữ đọc được.
+ * Lấy LINK THANH TOÁN cho một đơn CON còn chờ thanh toán: link cũ hết hạn / đã huỷ trên cổng, hoặc CHƯA có link vì PayOS chậm lúc đặt (`linkRetryable`).
+ * BE GIA HẠN cả hạn link lẫn hạn thanh toán của đơn (PLAN-0040 Tầng 1.2) và trả lại link của payment đang chờ nếu có — bấm hai lần liền cùng nhận một link.
+ * `orderCode` = mã đơn con (DH…). BE chặn: 10 lần/10 phút/người; đơn đã trả/đã huỷ → lỗi có chữ đọc được; tạo link lỗi → 503, bấm lại được.
  */
 export async function retryPayment(method: "payos", orderCode: string): Promise<string> {
   const d = bocData(await api.post<ApiResponse<{ paymentUrl: string }>>(`${API_PREFIX}/payments/${method}/retry/${encodeURIComponent(orderCode)}`), `${method}.retry`);

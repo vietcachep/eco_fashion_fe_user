@@ -7,15 +7,18 @@ import type { Address, AddressInputData } from "@/stores/address-store";
 
 /*
  * Sổ địa chỉ trên server (`/users/me/addresses`) — adapter camelCase BE ↔ `Address` của FE.
- * BE khớp `provinceName` không dấu với bảng tỉnh để tính phí ship; FE nhập tay chuỗi như mock.
+ * Giữ cả mã và tên địa chỉ GHN đã chọn; đơn cũ thiếu mã vẫn đọc được và khách chọn lại trong form khi sửa.
  */
 const chuoi = (v: unknown): string => (typeof v === "string" ? v : "");
 
 function chuanHoa(a: BeAddress): Address {
-  return { id: a.id, fullName: a.recipientName, phone: a.phone, province: a.provinceName, district: chuoi(a.districtName), ward: chuoi(a.wardName), street: a.street, isDefault: Boolean(a.isDefault) };
+  return { id: a.id, fullName: a.recipientName, phone: a.phone, province: a.provinceName, district: chuoi(a.districtName), ward: chuoi(a.wardName), street: a.street, isDefault: Boolean(a.isDefault),
+    addressSystem: a.addressSystem === "legacy_3level" ? a.addressSystem : undefined,
+    ghnProvinceId: a.ghnProvinceId ?? undefined, ghnDistrictId: a.ghnDistrictId ?? undefined, ghnWardCode: a.ghnWardCode ?? undefined };
 }
 
-const body = (a: AddressInputData) => ({ recipientName: a.fullName, phone: a.phone, provinceName: a.province, districtName: a.district || undefined, wardName: a.ward || undefined, street: a.street, isDefault: a.isDefault });
+const body = (a: AddressInputData) => ({ recipientName: a.fullName, phone: a.phone, provinceName: a.province, districtName: a.district || undefined, wardName: a.ward || undefined, street: a.street, isDefault: a.isDefault,
+  addressSystem: a.addressSystem, ghnProvinceId: a.ghnProvinceId, ghnDistrictId: a.ghnDistrictId, ghnWardCode: a.ghnWardCode });
 
 export const addressApi = {
   list: async (): Promise<Address[]> => bocData(await api.get<ApiResponse<BeAddress[]>>(`${API_PREFIX}/users/me/addresses`), "addresses").map(chuanHoa),

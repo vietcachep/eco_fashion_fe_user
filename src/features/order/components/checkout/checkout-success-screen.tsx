@@ -11,7 +11,8 @@ import { MockBadge } from "@/components/shared/mock-badge";
 import { PayOrderButton } from "@/features/payment/components/pay-order-button";
 import { canPayOnline } from "@/features/payment/hooks/use-pay-order";
 import { useOrderGroup } from "@/features/order/hooks/use-orders";
-import { MAU_TRANG_THAI, tenPhuongThuc, TRANG_THAI_DON, TRANG_THAI_THANH_TOAN } from "@/features/order/hooks/order-status";
+import { MAU_TRANG_THAI, tenPhuongThuc, TRANG_THAI_DON } from "@/features/order/hooks/order-status";
+import { PaymentStatusBadge } from "@/features/order/components/orders/order-status-badge";
 import type { OrderGroupResponse, OrderResponse } from "@/features/order/types";
 import { nhanBienThe } from "@/stores/cart-store";
 
@@ -22,7 +23,7 @@ import { nhanBienThe } from "@/stores/cart-store";
  * ĐƠN CHA (PLAN-0014): `code` là mã ĐƠN CHA (DHN…) — cũng nhận mã đơn con (DH…) khi cổng PayOS đưa khách quay lại, hook
  * tự tìm ra nhóm chứa nó. Giỏ nhiều shop = nhiều ĐƠN CON, mỗi đơn có trạng thái, số tiền và thanh toán RIÊNG: trang liệt kê
  * từng đơn con (shop, mã, tổng, trạng thái thanh toán) và đặt đúng thứ khách cần làm NGAY dưới đơn đó —
- *   · PayOS: nút "Thanh toán" mở cổng (link 30 phút; hết hạn → tạo lại). Khách trả LẦN LƯỢT từng đơn; đơn kế tiếp nổi bật.
+ *   · PayOS: nút "Thanh toán" mở cổng (hạn link do server trả; hết hạn / chưa tạo được link → "Thanh toán lại"). Khách trả LẦN LƯỢT từng đơn; đơn kế tiếp nổi bật.
  *   · COD: không phải trả trước.
  * Quay về từ cổng (hoặc về tab) thì trang tải lại để thấy đơn vừa trả. Mọi số tiền là số server (Money Rule).
  */
@@ -125,7 +126,7 @@ function NoiDung({ nhom }: { nhom: OrderGroupResponse }) {
                     <p className="fw-medium">Còn {choThanhToan.length} đơn chờ thanh toán</p>
                     <p className="mb-0">
                       {choThanhToan.length > 1 ? "Mỗi đơn thanh toán riêng — hãy trả lần lượt từng đơn bên dưới. " : "Bấm nút thanh toán ở đơn bên dưới. "}
-                      Liên kết thanh toán có hiệu lực 30 phút; đơn chưa thanh toán sẽ tự huỷ khi hết hạn.
+                      Hạn của liên kết hiện ngay dưới nút thanh toán của từng đơn; đơn chưa thanh toán sẽ tự huỷ khi hết hạn.
                     </p>
                   </div>
                 )}
@@ -209,7 +210,7 @@ function DonCon({ order, stt, noiBat }: { order: OrderResponse; stt: string | nu
         </div>
         <div className="d-flex align-items-center flex-wrap gap-8">
           <span className={cn("status-badge", `is-${MAU_TRANG_THAI[order.status]}`)}>{TRANG_THAI_DON[order.status]}</span>
-          <span className={cn("status-badge", order.payment_status === "paid" ? "is-ok" : order.payment_status === "refunded" ? "is-muted" : "is-warn")}>{TRANG_THAI_THANH_TOAN[order.payment_status]}</span>
+          <PaymentStatusBadge status={order.payment_status} refund={order.refund} carrierCodStatus={order.carrier_cod_status} />
         </div>
       </div>
 
@@ -245,6 +246,7 @@ function DonCon({ order, stt, noiBat }: { order: OrderResponse; stt: string | nu
 function ViecCanLam({ order, noiBat }: { order: OrderResponse; noiBat: boolean }) {
   if (order.status === "cancelled") return <p className="text-sm text-main">Đơn đã huỷ{order.payment_status === "refunded" ? " — khoản thanh toán đã được hoàn" : ""}.</p>;
   if (order.payment_status === "paid") return <p className="text-sm text-main">Đã thanh toán. Cảm ơn bạn!</p>;
+  if (order.carrier_cod_status === "collected_pending_remittance") return <p className="text-sm text-main">Bạn đã thanh toán cho hãng giao hàng. Không cần thanh toán thêm.</p>;
   if (order.payment_method_code === "cod") return <p className="text-sm text-main">Không cần trả trước — bạn thanh toán {formatMoney(order.total)} cho nhân viên giao hàng.</p>;
   if (canPayOnline(order)) return <PayOrderButton order={order} noiBat={noiBat} />;
   if (order.payment_status === "processing") return <p className="text-sm text-main">Đang xử lý thanh toán — vui lòng đợi trong giây lát.</p>;

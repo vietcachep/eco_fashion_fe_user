@@ -4,10 +4,10 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tansta
 import { toast } from "sonner";
 import { apiErrorMessage } from "@/lib/api-error";
 import {
-  cancelOrder, confirmReceived, createReview, getOrder, getOrderGroup, listMyReviewsPage, listOrderGroupsPage, listOrdersPage, listReturnsPage, requestReturn,
+  cancelOrder, changeOrderAddress, confirmReceived, createReview, getOrder, getOrderGroup, listMyReviewsPage, listOrderGroupsPage, listOrdersPage, requestCancelOrder,
   type CreateReviewRequest,
 } from "@/features/order/api/order-api";
-import type { MediaItem } from "@/types/common";
+import type { CancelOrderBody, ChangeOrderAddressBody, OrderResponse } from "@/features/order/types";
 import { chonPhienSanSang, useAuthStore } from "@/stores/auth-store";
 
 /*
@@ -67,7 +67,8 @@ export function useOrderGroup(code: string, opts: { lamMoiKhiQuayLai?: boolean }
   });
 }
 
-function useLamMoiDon() {
+/* Làm mới mọi thứ phụ thuộc đơn: đơn, đổi trả (hoàn tiền đổi trạng thái đơn), đánh giá — dùng chung với `use-returns`. */
+export function useLamMoiDon() {
   const qc = useQueryClient();
   return () => Promise.all([
     qc.invalidateQueries({ queryKey: ["orders", khoaUser()] }),
@@ -76,11 +77,40 @@ function useLamMoiDon() {
   ]);
 }
 
+/*
+ * Các thao tác của KHÁCH trên một đơn con (PLAN-0027): huỷ tức thì · yêu cầu huỷ · đổi địa chỉ · đã nhận hàng. Server trả đơn MỚI NHẤT — thành công thì làm mới mọi
+ * màn đơn/đổi trả. Lỗi 4xx (409 đơn vừa đổi trạng thái, đã có yêu cầu huỷ, địa chỉ đã khoá…) cũng làm mới để nút trên màn khớp trạng thái thật; chữ lỗi của BE
+ * do nơi gọi hiện (inline trong bảng) — hook không toast để khỏi báo hai lần.
+ */
+const coHoanTien = (don: OrderResponse) => Boolean(don.refund) || don.payment_status === "refunded" || don.payment_status === "partially_refunded";
+
 export function useCancelOrder() {
   const lamMoi = useLamMoiDon();
   return useMutation({
-    mutationFn: ({ code, reason }: { code: string; reason: string }) => cancelOrder(code, reason),
-    onSuccess: async () => { toast.success("Đã huỷ đơn hàng"); await lamMoi(); },
+    mutationFn: ({ code, body }: { code: string; body: CancelOrderBody }) => cancelOrder(code, body),
+    onSuccess: async (don) => {
+      toast.success(coHoanTien(don) ? "Đã huỷ đơn hàng — khoản đã thanh toán sẽ được hoàn về tài khoản bạn đã trả" : "Đã huỷ đơn hàng");
+      await lamMoi();
+    },
+    onError: () => { void lamMoi(); },
+  });
+}
+
+export function useRequestCancelOrder() {
+  const lamMoi = useLamMoiDon();
+  return useMutation({
+    mutationFn: ({ code, body }: { code: string; body: CancelOrderBody }) => requestCancelOrder(code, body),
+    onSuccess: async () => { toast.success("Đã gửi yêu cầu huỷ — shop sẽ phản hồi trong thời hạn hiển thị ở đơn"); await lamMoi(); },
+    onError: () => { void lamMoi(); },
+  });
+}
+
+export function useChangeOrderAddress() {
+  const lamMoi = useLamMoiDon();
+  return useMutation({
+    mutationFn: ({ code, body }: { code: string; body: ChangeOrderAddressBody }) => changeOrderAddress(code, body),
+    onSuccess: async () => { toast.success("Đã đổi thông tin nhận hàng — shop sẽ giao theo địa chỉ mới"); await lamMoi(); },
+    onError: () => { void lamMoi(); },
   });
 }
 
@@ -89,27 +119,8 @@ export function useConfirmReceived() {
   return useMutation({
     mutationFn: (code: string) => confirmReceived(code),
     onSuccess: async () => { toast.success("Đã xác nhận nhận hàng"); await lamMoi(); },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Không cập nhật được đơn hàng"),
-  });
-}
-
-export function useRequestReturn() {
-  const lamMoi = useLamMoiDon();
-  return useMutation({
-    mutationFn: ({ code, reason, detail, variantIds, evidence }: { code: string; reason: string; detail?: string; variantIds: string[]; evidence: MediaItem[] }) =>
-      requestReturn(code, { reason, detail, variant_ids: variantIds, evidence }),
-    onSuccess: async () => { toast.success("Đã gửi yêu cầu trả hàng"); await lamMoi(); },
-  });
-}
-
-/* Yêu cầu trả hàng của tôi — phân trang server; khoá dưới `["returns", email]` nên `useLamMoiDon` làm mới được. */
-export function useReturnsPage(params: { page?: number; size?: number } = {}) {
-  const { email, sanSang } = useKhoaDon();
-  const { page = 1, size = 10 } = params;
-  return useQuery({
-    queryKey: ["returns", email, "page", page, size],
-    queryFn: () => listReturnsPage({ page, size }),
-    enabled: sanSang, staleTime: 0, placeholderData: keepPreviousData,
+    /* 409 ORDER_HAS_OPEN_RETURN / ORDER_NOT_DELIVERED: câu của BE đã nói rõ vì sao; làm mới để nút "Đã nhận hàng" biến mất nếu không còn hợp lệ. */
+    onError: (e) => { toast.error(apiErrorMessage(e, "Không cập nhật được đơn hàng. Thử lại giúp mình nhé.")); void lamMoi(); },
   });
 }
 

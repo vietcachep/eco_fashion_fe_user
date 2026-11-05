@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiErrorCode, apiStatus } from "@/lib/api-error";
 import { createOrder, getCheckoutSummary } from "@/features/order/api/order-api";
 import { useCartSanSang, useChuKyGio } from "@/features/cart/hooks/use-cart-ready";
-import type { CheckoutShopGroup, CheckoutSummaryResponse, CreateOrderRequest } from "@/features/order/types";
+import type { CheckoutShopGroup, CheckoutSummaryResponse, CreateOrderRequest, PaymentMethodCode } from "@/features/order/types";
 import { useAuthStore } from "@/stores/auth-store";
 import { useCartStore } from "@/stores/cart-store";
 
@@ -20,13 +20,13 @@ import { useCartStore } from "@/stores/cart-store";
  * `usePlaceOrder` KHÔNG xoá giỏ trong mutationFn — người gọi dọn giỏ + điều hướng khi onSuccess, để lỗi giữa chừng
  * không làm mất giỏ của khách.
  */
-export function useCheckoutSummary(addressId: string | null | undefined, voucherCodes: string[], opts: { enabled?: boolean } = {}) {
+export function useCheckoutSummary(addressId: string | null | undefined, voucherCodes: string[], opts: { enabled?: boolean; paymentMethodCode?: PaymentMethodCode } = {}) {
   const coGio = useCartStore((s) => s.lines.length > 0);
   const gioSanSang = useCartSanSang();
   const khoaGio = useChuKyGio();
   return useQuery({
-    queryKey: ["checkout", "summary", addressId ?? null, voucherCodes.join(","), khoaGio],
-    queryFn: () => getCheckoutSummary(addressId, voucherCodes),
+    queryKey: ["checkout", "summary", addressId ?? null, voucherCodes.join(","), khoaGio, opts.paymentMethodCode ?? null],
+    queryFn: () => getCheckoutSummary(addressId, voucherCodes, opts.paymentMethodCode),
     enabled: (opts.enabled ?? true) && coGio && gioSanSang,
     staleTime: 0,
     placeholderData: (prev) => prev,
@@ -47,7 +47,8 @@ const taoKhoa = () => globalThis.crypto?.randomUUID?.() ?? `${Date.now().toStrin
  * Đặt hàng. Idempotency-Key gắn với NỘI DUNG lệnh (địa chỉ, cách trả, ghi chú, mã): bấm hai lần / thử lại sau khi mất mạng
  * dùng lại đúng khoá nên BE trả lại đơn đã tạo thay vì tạo đôi; đổi nội dung thì khoá mới (cùng khoá khác nội dung BE
  * từ chối 409). Lỗi nghiệp vụ (4xx) bỏ khoá — thử lại là một lần đặt mới; mất mạng / 5xx / "đang xử lý" thì giữ khoá vì đơn có
- * thể đã được tạo mà phản hồi không về.
+ * thể đã được tạo mà phản hồi không về. `expected_total` KHÔNG thuộc dấu vân tay: 409 ORDER_PRICE_CHANGED (giá đổi, BE chưa tạo gì và đã hoàn tác khoá) cũng là 4xx
+ * nên khoá bị bỏ, "Đặt hàng với giá mới" đi bằng khoá mới.
  */
 export function usePlaceOrder() {
   const qc = useQueryClient();
@@ -67,7 +68,7 @@ export function usePlaceOrder() {
     },
     onError: (e) => {
       const status = apiStatus(e);
-      const giuKhoa = status === undefined || status >= 500 || apiErrorCode(e) === "COMMON_IDEMPOTENCY_IN_PROGRESS";
+      const giuKhoa = status === undefined || status >= 500 || ["COMMON_IDEMPOTENCY_IN_PROGRESS", "ORDER_PRICE_CHANGED"].includes(apiErrorCode(e) ?? "");
       if (!giuKhoa) khoa.current = null;
     },
   });

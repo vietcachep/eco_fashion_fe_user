@@ -10,6 +10,7 @@ import { ROUTES } from "@/lib/constants";
 import { CHE_DO_MOCK } from "@/lib/api-mode";
 import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { apiErrorMessage } from "@/lib/api-error";
 import { useStoreHydrated } from "@/lib/hooks/use-store-hydrated";
 import { FieldMessage } from "@/components/shared/field-message";
 import { IconCheck, IconPin } from "@/components/shared/icons";
@@ -22,10 +23,11 @@ import { VoucherPicker } from "@/features/promotion/components/vouchers/voucher-
 import { VoucherResults } from "@/features/promotion/components/vouchers/voucher-results";
 import { CheckoutShopGroup } from "@/features/order/components/checkout/checkout-shop-group";
 import { CheckoutSkeleton } from "@/features/order/components/checkout/checkout-skeleton";
+import { PriceChangedDialog, type GiaDoiChoXacNhan } from "@/features/order/components/checkout/price-changed-dialog";
 import { timTienTheoShop, useCheckoutSummary, usePlaceOrder } from "@/features/order/hooks/use-checkout";
-import { docLoiDatHang, type LoiDatHang } from "@/features/order/api/order-error";
+import { docGiaThayDoi, docLoiDatHang, type LoiDatHang } from "@/features/order/api/order-error";
 import { checkoutSchema, type CheckoutInput } from "@/features/order/schemas/checkout-schema";
-import type { PaymentMethodCode } from "@/features/order/types";
+import type { CreateOrderRequest, PaymentMethodCode } from "@/features/order/types";
 import { useAddressStore, chonMacDinh } from "@/stores/address-store";
 import { useAuthStore } from "@/stores/auth-store";
 import { laDongDaChon, nhomTheoShop, useCartStore } from "@/stores/cart-store";
@@ -42,7 +44,11 @@ import { useVoucherStore } from "@/stores/voucher-store";
  *
  * ★ MÀN NÀY KHÔNG TÍNH MỘT PHÉP TIỀN NÀO (Money Rule): mọi con số — tổng, từng shop, từng mã — từ
  * `useCheckoutSummary` (cùng công thức với `createOrder`). Lệnh đặt hàng chỉ gửi thứ CHỈ CLIENT biết: địa chỉ nào,
- * trả bằng gì, ghi chú, mã giảm (đúng các mã bảng tiền đã nhận — nên tổng khách thấy = tổng đặt).
+ * trả bằng gì, ghi chú, mã giảm (đúng các mã bảng tiền đã nhận) cùng `expected_total` = NGUYÊN tổng khách đang thấy.
+ *
+ * Giá đổi giữa lúc xem và lúc bấm đặt (CK-05): BE trả 409 ORDER_PRICE_CHANGED kèm báo giá mới, KHÔNG tạo đơn — màn mở `PriceChangedDialog`
+ * ("tổng mới X, trước đó Y") thay vì thông báo lỗi chung. Khách chọn "Đặt hàng với giá mới" thì đặt lại với `expected_total` = tổng mới và CHỈ các mã
+ * báo giá mới còn nhận; giữ Idempotency-Key khi command không đổi (BE đã hoàn tác khoá của lần 409 nên không sót đơn nào).
  *
  * Đặt xong: giỏ một phương thức online + MỘT đơn con → chuyển thẳng sang cổng; còn lại sang trang đặt thành công
  * (liệt kê từng đơn con, nút thanh toán lần lượt từng đơn).
@@ -102,6 +108,9 @@ function CheckoutBody({ onDaDat }: { onDaDat: (thongBao: string) => void }) {
   const boMa = useVoucherStore((s) => s.bo);
   const boHetMa = useVoucherStore((s) => s.boHet);
   const [loi, setLoi] = useState<LoiDatHang | null>(null);
+  /* 409 giá đổi: dữ liệu hộp thoại giữ lại sau khi đóng (nội dung không biến mất giữa hiệu ứng mờ); `moHopGia` quyết hộp hiện hay ẩn. */
+  const [giaDoi, setGiaDoi] = useState<{ doi: GiaDoiChoXacNhan; lenh: CreateOrderRequest } | null>(null);
+  const [moHopGia, setMoHopGia] = useState(false);
 
   /* Ghi chú + cách thanh toán: RHF + Zod (schema ở `schemas/checkout-schema.ts`). */
   const form = useForm<CheckoutInput>({ resolver: zodResolver(checkoutSchema), defaultValues: { note: useCartStore.getState().ghiChu, paymentMethod: "cod" } });
@@ -115,46 +124,67 @@ function CheckoutBody({ onDaDat }: { onDaDat: (thongBao: string) => void }) {
   const dongDaChon = lines.filter(laDongDaChon);
   const nhoms = nhomTheoShop(dongDaChon);
   const soDonCon = nhoms.length;
-  const { data: summary, isError: loiBangTien, isFetching: dangTinh, isPlaceholderData, refetch } = useCheckoutSummary(address?.id, voucherCodes);
+  const { data: summary, isError: loiBangTien, error: loiTinhTien, isFetching: dangTinh, isPlaceholderData, refetch } = useCheckoutSummary(address?.id, voucherCodes, { paymentMethodCode: paymentCodeBanDau });
   /* Bảng tiền trên màn đã khớp giỏ + mã hiện tại (không phải số cũ giữ tạm) → mới được đặt. */
   const bangTienMoi = Boolean(summary) && !dangTinh && !isPlaceholderData;
-  /* PLAN-0020: gian hàng chưa đặt cọc thì không nhận COD → khoá COD, tự chuyển sang phương thức khác (PayOS) nếu có. */
+  /* COD availability do BE quyết theo tuyến: carrier COD không cần cọc, self COD vẫn có điều kiện ví. */
   const shopChanCod = (summary?.shop_groups ?? []).filter((g) => !g.cod_available).map((g) => g.shop_name);
   const codBiChan = shopChanCod.length > 0;
-  const paymentCode: PaymentMethodCode = codBiChan && paymentCodeBanDau === "cod" ? (phuongThuc?.find((m) => m.code !== "cod")?.code ?? "cod") : paymentCodeBanDau;
+  /* Không tự đổi phương thức sau khi lấy quote: phí/điều kiện COD phải khớp đúng phương thức khách xác nhận. */
+  const paymentCode: PaymentMethodCode = paymentCodeBanDau;
   const canhBao = summary?.warnings ?? [];
   const maBiTuChoi = (summary?.vouchers ?? []).filter((v) => !v.ok);
+
+  /* Gửi một lệnh đặt hàng; dùng cho cả lần bấm "Đặt hàng" lẫn "Đặt hàng với giá mới". */
+  const guiLenh = (lenh: CreateOrderRequest) => {
+    setLoi(null);
+    placeOrder.mutate(lenh, {
+      onSuccess: (nhom) => {
+        sauDatHang(); boHetMa();
+        /* Cổng online + đúng MỘT đơn con: sang cổng ngay (PayOS chậm lúc đặt → `payment_url = null`, rơi xuống trang đặt thành công có nút "Thanh toán lại").
+           Nhiều đơn con: mỗi đơn có link riêng — sang trang đặt thành công liệt kê từng đơn, khách thanh toán lần lượt (cổng đưa khách về
+           /checkout/*-return rồi quay lại trang đó). */
+        const urlCong = nhom.orders.length === 1 ? nhom.orders[0].payment_url : null;
+        if (urlCong) { onDaDat("Đặt hàng thành công — đang chuyển tới cổng thanh toán..."); window.location.assign(urlCong); return; }
+        onDaDat("Đặt hàng thành công — đang chuyển tới trang xác nhận...");
+        router.push(ROUTES.checkoutSuccess(nhom.code));
+      },
+      onError: (e) => {
+        /* Giá đổi: KHÔNG phải lỗi chung — hỏi khách xác nhận lại với báo giá mới (bảng tiền cũ chụp lại để chỉ ra shop / mã nào đổi). */
+        const gia = docGiaThayDoi(e);
+        if (gia) { setGiaDoi({ doi: { gia, bangCu: summary }, lenh }); setMoHopGia(true); }
+        else setLoi(docLoiDatHang(e));
+        /* Giỏ/mã/tồn/giá có thể đã đổi: tính lại bảng tiền để cảnh báo và số trên màn khớp với server. */
+        void qc.invalidateQueries({ queryKey: ["checkout"] });
+      },
+    });
+  };
 
   const datHang = form.handleSubmit(async (values) => {
     if (!address) { setLoi({ message: "Chọn địa chỉ nhận hàng trước đã.", goiY: null }); return; }
     if (!summary) return;
-    setLoi(null);
-    placeOrder.mutate(
-      {
-        address_id: address.id,
-        payment_method_code: paymentCode,
-        note: values.note || undefined,
-        /* Chỉ gửi các mã bảng tiền ĐÃ NHẬN — mã bị từ chối thì BE huỷ cả đơn (400 ORDER_PROMOTION_INVALID); khách đã thấy chúng "không áp dụng". */
-        voucher_codes: summary.vouchers.filter((v) => v.ok).map((v) => v.code),
-      },
-      {
-        onSuccess: (nhom) => {
-          sauDatHang(); boHetMa();
-          /* Cổng online + đúng MỘT đơn con: sang cổng ngay. Nhiều đơn con: mỗi đơn có link riêng — sang trang đặt thành công
-             liệt kê từng đơn, khách thanh toán lần lượt (cổng đưa khách về /checkout/*-return rồi quay lại trang đó). */
-          const urlCong = nhom.orders.length === 1 ? nhom.orders[0].payment_url : null;
-          if (urlCong) { onDaDat("Đặt hàng thành công — đang chuyển tới cổng thanh toán..."); window.location.assign(urlCong); return; }
-          onDaDat("Đặt hàng thành công — đang chuyển tới trang xác nhận...");
-          router.push(ROUTES.checkoutSuccess(nhom.code));
-        },
-        onError: (e) => {
-          setLoi(docLoiDatHang(e));
-          /* Giỏ/mã/tồn có thể đã đổi: tính lại bảng tiền để cảnh báo và số trên màn khớp với server. */
-          void qc.invalidateQueries({ queryKey: ["checkout"] });
-        },
-      },
-    );
+    guiLenh({
+      address_id: address.id,
+      payment_method_code: paymentCode,
+      note: values.note || undefined,
+      /* Chỉ gửi các mã bảng tiền ĐÃ NHẬN — mã bị từ chối thì BE huỷ cả đơn (400 ORDER_PROMOTION_INVALID); khách đã thấy chúng "không áp dụng". */
+      voucher_codes: summary.vouchers.filter((v) => v.ok).map((v) => v.code),
+      /* NGUYÊN tổng khách đang thấy (chuỗi VND của server) — BE so với số tự tính lại lúc đặt; lệch ⇒ 409 giá đổi. */
+      expected_total: summary.total.amount,
+      shipping_quote_ids: summary.shop_groups.flatMap((g) => g.shipping_quote_id ? [g.shipping_quote_id] : []),
+    });
   });
+
+  /* "Đặt hàng với giá mới": cùng lệnh, `expected_total` = tổng mới server vừa tính, mã = đúng các mã báo giá mới còn nhận (mã vừa bị từ chối bỏ ra). */
+  const datLaiGiaMoi = () => {
+    if (!giaDoi) return;
+    const { doi, lenh } = giaDoi;
+    setMoHopGia(false);
+    guiLenh({ ...lenh, expected_total: doi.gia.moi,
+      shipping_quote_ids: doi.gia.bangTien ? doi.gia.bangTien.shop_groups.flatMap((g) => g.shipping_quote_id ? [g.shipping_quote_id] : []) : lenh.shipping_quote_ids,
+      voucher_codes: doi.gia.bangTien ? doi.gia.bangTien.vouchers.filter((v) => v.ok).map((v) => v.code) : lenh.voucher_codes });
+  };
+  const quayLaiGio = () => { setMoHopGia(false); router.push(ROUTES.cart); };
 
   const nhanNut = (() => {
     if (placeOrder.isPending) return "Đang đặt hàng...";
@@ -164,6 +194,7 @@ function CheckoutBody({ onDaDat }: { onDaDat: (thongBao: string) => void }) {
 
   return (
     <div className="flat-spacing-25">
+      <PriceChangedDialog doi={giaDoi?.doi ?? null} mo={moHopGia} onDatLai={datLaiGiaMoi} onQuayLaiGio={quayLaiGio} onXemLai={() => setMoHopGia(false)} />
       <div className="container">
         <div className="row">
           <div className="col-xl-8">
@@ -282,9 +313,9 @@ function CheckoutBody({ onDaDat }: { onDaDat: (thongBao: string) => void }) {
                 </div>
                 {summary?.province_name && <p className="text-xs text-main mt_8">Phí vận chuyển tính theo: {summary.province_name}</p>}
 
-                {loiBangTien && !summary && (
+                {loiBangTien && (
                   <p role="alert" className="checkout-error text-sm mt_16">
-                    Chưa tính được bảng tiền. <button type="button" className="btn-link-plain text-sm fw-medium" onClick={() => void refetch()}>Thử lại</button>
+                    {apiErrorMessage(loiTinhTien, "Chưa tính được bảng tiền.")} <button type="button" className="btn-link-plain text-sm fw-medium" onClick={() => void refetch()}>Thử lại</button>
                   </p>
                 )}
 
@@ -307,7 +338,7 @@ function CheckoutBody({ onDaDat }: { onDaDat: (thongBao: string) => void }) {
 
                 <div className="btn-order">
                   <button type="button" className="tf-btn btn-dark2 animate-btn w-100"
-                    disabled={!address || placeOrder.isPending || !bangTienMoi || dongDaChon.length === 0 || canhBao.length > 0 || !paymentCode || (paymentCode === "cod" && codBiChan)}
+                    disabled={!address || placeOrder.isPending || loiBangTien || !bangTienMoi || dongDaChon.length === 0 || canhBao.length > 0 || !paymentCode || (paymentCode === "cod" && codBiChan)}
                     onClick={datHang}>
                     {nhanNut}
                   </button>

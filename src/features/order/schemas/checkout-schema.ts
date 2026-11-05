@@ -3,7 +3,7 @@ import { z } from "zod";
 /*
  * Form đặt hàng — nguồn sự thật DUY NHẤT cho validation (Form Rules).
  * Số điện thoại: đầu số di động Việt Nam 03/05/07/08/09 + 8 số, hoặc +84.
- * Địa chỉ nhập tay ba cấp; danh sách tỉnh/huyện/xã thật lấy từ backend sau.
+ * Địa chỉ ba cấp: chế độ mẫu nhập tay; có backend chọn mã+tên từ danh mục vận chuyển.
  */
 export const VN_PHONE = /^(?:\+84|0)(?:3|5|7|8|9)\d{8}$/;
 
@@ -16,6 +16,10 @@ export const addressSchema = z.object({
   ward: z.string().trim().min(1, "Nhập phường / xã"),
   street: z.string().trim().min(5, "Nhập số nhà, tên đường").max(200, "Địa chỉ quá dài"),
   isDefault: z.boolean(),
+  addressSystem: z.literal("legacy_3level").optional(),
+  ghnProvinceId: z.number().int().positive().optional(),
+  ghnDistrictId: z.number().int().positive().optional(),
+  ghnWardCode: z.string().trim().min(1).optional(),
 });
 export type AddressInput = z.infer<typeof addressSchema>;
 

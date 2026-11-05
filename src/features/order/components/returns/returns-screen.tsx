@@ -3,20 +3,19 @@
 import Link from "next/link";
 import { ROUTES } from "@/lib/constants";
 import { formatDate, formatMoney } from "@/lib/format";
-import { cn } from "@/lib/utils";
 import { MockBadge } from "@/components/shared/mock-badge";
-import { MediaThumbs } from "@/components/shared/media-uploader";
 import { PagedAccountList } from "@/features/order/components/account-list/paged-account-list";
-import { OrderThumb } from "@/features/order/components/orders/order-thumb";
-import { TRANG_THAI_TRA } from "@/features/order/hooks/order-status";
-import { useReturnsPage } from "@/features/order/hooks/use-orders";
+import { DeadlineNote } from "@/features/order/components/returns/deadline-note";
+import { ReturnLines } from "@/features/order/components/returns/return-lines";
+import { ReturnStatusBadge } from "@/features/order/components/returns/return-status-badge";
+import { LY_DO_TRA, TEN_BEN, benDangCho, coSoTienHoan, moTaTrangThai, nhanSoTienHoan } from "@/features/order/hooks/return-status";
+import { useReturnsPage } from "@/features/order/hooks/use-returns";
 import type { ReturnRequestResponse } from "@/features/order/types";
-import { nhanBienThe } from "@/stores/cart-store";
 
 /*
- * Danh sách yêu cầu trả hàng / hoàn tiền của tôi. Mỗi yêu cầu thuộc MỘT đơn con (một shop) — mã đơn bấm vào mở chi tiết đơn con đó.
- * Trạng thái CHỈ ĐỌC: cửa hàng duyệt, khách theo dõi. Giao diện không được hứa "sẽ hoàn" khi yêu cầu còn chờ duyệt.
- * Phân trang ở server, số trang nằm trên URL (`?page=`).
+ * Danh sách yêu cầu đổi trả / hoàn tiền của tôi. Mỗi yêu cầu thuộc MỘT đơn con (một shop) và cho biết ngay: đang ở bước nào, TỚI LƯỢT AI
+ * (Bạn · Shop · Sàn) và còn bao lâu — hạn lấy từ server. Bấm "Xem chi tiết" để làm việc cần làm (gửi hàng trả, khiếu nại, rút yêu cầu).
+ * Giao diện không hứa "sẽ hoàn" khi yêu cầu còn chờ duyệt. Phân trang ở server, số trang nằm trên URL (`?page=`).
  */
 const SO_YEU_CAU_MOI_TRANG = 10;
 
@@ -29,12 +28,15 @@ export function ReturnsScreen({ page }: { page: number }) {
       <h6 className="title-account d-flex align-items-center gap-8">Đổi trả / hoàn tiền <MockBadge /></h6>
       <PagedAccountList
         query={query} page={page} hrefFor={hrefFor} keyOf={(r) => r.id} render={(r) => <ReturnCard r={r} />}
-        loiMacDinh="Không tải được các yêu cầu trả hàng. Thử lại sau nhé."
+        loiMacDinh="Không tải được các yêu cầu đổi trả. Thử lại sau nhé."
         empty={(
           <div className="acc-empty">
             <p className="text-md fw-medium">Chưa có yêu cầu nào</p>
-            <p className="text-sm text-main mt_4">Yêu cầu trả hàng gửi từ chi tiết đơn (đơn đã giao) sẽ hiện ở đây.</p>
-            <Link href={ROUTES.accountOrders} className="tf-btn btn-out-line-dark btn-small mt_16">Đơn hàng của tôi</Link>
+            <p className="text-sm text-main mt_4">Yêu cầu đổi trả hoặc báo chưa nhận hàng gửi từ chi tiết đơn sẽ hiện ở đây.</p>
+            <div className="d-flex justify-content-center flex-wrap gap-12 mt_16">
+              <Link href={ROUTES.accountOrders} className="tf-btn btn-out-line-dark btn-small">Đơn hàng của tôi</Link>
+              <Link href={ROUTES.returns} className="tf-btn btn-out-line-dark btn-small">Chính sách đổi trả</Link>
+            </div>
           </div>
         )}
       />
@@ -43,33 +45,30 @@ export function ReturnsScreen({ page }: { page: number }) {
 }
 
 function ReturnCard({ r }: { r: ReturnRequestResponse }) {
+  const mota = moTaTrangThai(r);
+  const ben = benDangCho(r);
+  const lyDo = LY_DO_TRA[r.reason_code] ?? r.reason_code;
   return (
     <article className="order-card">
       <header className="order-card-head">
         <span className="pm-icon on-soft" aria-hidden><i className="icon icon-return" /></span>
         <Link href={ROUTES.accountOrder(r.order_code)} className="text-sm fw-semibold font-mono link text-primary">{r.order_code}</Link>
         <span className="text-xs text-main">{formatDate(r.created_at)}</span>
-        <span className={cn("status-badge ms-auto", r.status === "refunded" || r.status === "approved" ? "is-ok" : r.status === "rejected" ? "is-muted" : "is-warn")}>{TRANG_THAI_TRA[r.status] ?? r.status}</span>
+        <span className="ms-auto"><ReturnStatusBadge r={r} /></span>
       </header>
       <div className="order-card-body">
-        <p className="text-sm"><span className="fw-medium">{r.reason}</span>{r.detail && <span className="text-main"> — {r.detail}</span>}</p>
-        {r.reject_reason && <p className="text-xs fw-medium text-primary mt_4">Lý do từ chối: {r.reject_reason}</p>}
-        {(r.evidence?.length ?? 0) > 0 && <div className="mt_12"><p className="text-xs text-main mb_8">Minh chứng đã gửi</p><MediaThumbs items={r.evidence} size={64} /></div>}
-        <ul className="return-items mt_12">
-          {r.items.map((i, k) => {
-            const bienThe = nhanBienThe(i.color, i.size);
-            return (
-              <li key={k} className="d-flex align-items-center gap-12">
-                <OrderThumb src={i.image_url} alt={i.name} width={40} height={53} />
-                <span className="text-sm">{i.name} <span className="text-xs text-main">· {bienThe && `${bienThe} · `}×{i.quantity}</span></span>
-              </li>
-            );
-          })}
-        </ul>
+        <p className="text-sm mb-0"><span className="fw-medium">{lyDo}</span>{r.reason_code === "other" && r.reason && <span className="text-main"> — {r.reason}</span>}</p>
+        <p className="text-sm mt_8 mb-0">
+          <span className="fw-medium">{mota.tieuDe}</span>
+          {ben && <span className="acc-badge ms-2">Tới lượt: {TEN_BEN[ben]}</span>}
+        </p>
+        {r.deadline_at && r.deadline_kind && <p className="text-xs mt_4 mb-0"><DeadlineNote at={r.deadline_at} kind={r.deadline_kind} gon /></p>}
+        <div className="mt_12"><ReturnLines items={r.items} /></div>
       </div>
       <div className="order-card-foot">
-        <span className="text-xs text-main">{r.status === "refunded" ? "Đã hoàn" : "Số tiền hoàn dự kiến"}</span>
-        <span className="ms-auto text-md fw-semibold text-primary">{formatMoney(r.refund_amount)}</span>
+        <span className="text-xs text-main">{nhanSoTienHoan(r)}</span>
+        {coSoTienHoan(r) && <span className="text-md fw-semibold text-primary">{formatMoney(r.refund_amount)}</span>}
+        <Link href={ROUTES.accountReturn(r.id)} className="tf-btn btn-out-line-dark btn-xs ms-auto">Xem chi tiết <i className="icon icon-arr-right" /></Link>
       </div>
     </article>
   );

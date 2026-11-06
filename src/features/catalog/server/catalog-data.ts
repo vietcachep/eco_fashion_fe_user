@@ -202,8 +202,8 @@ export const fetchShop = cache(async (slug: string): Promise<ShopResponse | null
   }
 });
 
-/* Danh sách gian hàng cho `/shops` — BE xếp điểm đánh giá cao trước, `pageSize ≤ 48`. */
-export async function fetchShops(query: { q?: string; page?: number }, pageSize = PRODUCT_PAGE_SIZE): Promise<ShopPage> {
+/* Danh sách gian hàng cho `/shops`: 15 gian hàng/trang, BE xếp điểm đánh giá cao trước. */
+export async function fetchShops(query: { q?: string; page?: number }, pageSize = 15): Promise<ShopPage> {
   const page = Math.max(1, query.page ?? 1);
   if (CHE_DO_MOCK) {
     const t = (query.q ?? "").trim().toLowerCase();

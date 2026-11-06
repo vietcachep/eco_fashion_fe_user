@@ -63,9 +63,9 @@ export function AddressForm({ macDinh, onSubmit, onCancel, laSua }: { macDinh: A
         <O {...o} id="province" label="Tỉnh / Thành phố" autoComplete="address-level1" />
         <O {...o} id="district" label="Quận / Huyện" autoComplete="address-level2" />
       </div> : <>
-        <p className="text-xs text-main">Chọn địa chỉ theo danh mục tỉnh / quận huyện / phường xã của hãng vận chuyển. Địa chỉ cũ cần được chọn lại trước khi gửi hàng.</p>
-        <div className="cols">
-          <fieldset>
+        <p className="address-location-hint text-xs text-main">Chọn địa chỉ theo danh mục tỉnh / quận huyện / phường xã của hãng vận chuyển. Địa chỉ cũ cần được chọn lại trước khi gửi hàng.</p>
+        <div className="cols address-location-row">
+          <fieldset className="address-location-field">
             <label htmlFor="addr-province">Tỉnh / Thành phố</label>
             <select id="addr-province" className="w-100" value={provinceId ?? ""} disabled={provinces.isPending} aria-invalid={!!o.errors.province} onChange={(e) => {
               const selected = provinces.data?.find((p) => String(p.id) === e.target.value);
@@ -80,7 +80,7 @@ export function AddressForm({ macDinh, onSubmit, onCancel, laSua }: { macDinh: A
             </select>
             <FieldMessage message={o.errors.province?.message} />
           </fieldset>
-          <fieldset>
+          <fieldset className="address-location-field">
             <label htmlFor="addr-district">Quận / Huyện</label>
             <select id="addr-district" className="w-100" value={districtId ?? ""} disabled={!provinceId || districts.isPending} aria-invalid={!!o.errors.district} onChange={(e) => {
               const selected = districts.data?.find((p) => String(p.id) === e.target.value);
@@ -94,7 +94,7 @@ export function AddressForm({ macDinh, onSubmit, onCancel, laSua }: { macDinh: A
             <FieldMessage message={o.errors.district?.message} />
           </fieldset>
         </div>
-        <fieldset>
+        <fieldset className="address-location-field">
           <label htmlFor="addr-ward">Phường / Xã</label>
           <select id="addr-ward" className="w-100" value={wardCode ?? ""} disabled={!districtId || wards.isPending} aria-invalid={!!o.errors.ward} onChange={(e) => {
             const selected = wards.data?.find((p) => String(p.code ?? p.id) === e.target.value);

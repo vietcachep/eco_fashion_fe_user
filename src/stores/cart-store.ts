@@ -39,6 +39,8 @@ export interface CartLine {
   status?: "ok" | "low_stock" | "unavailable";
   /* Server: dòng có được tick để đặt hàng không (`/checkout/summary` và `POST /orders` chỉ tính dòng đã tick). Thiếu = chọn. */
   selected?: boolean;
+  eligibleQuantity?: number;
+  sourceLots?: { id: string; sessionId: string; shopId: string; productId: string; quantity: number; eligibleUntil: string }[];
   /* Gian hàng của sản phẩm (PLAN-0008): giỏ server trả `shopSlug`/`shopName`; giỏ khách vãng lai suy từ `product.shop`. */
   shopSlug?: string;
   shopName?: string;

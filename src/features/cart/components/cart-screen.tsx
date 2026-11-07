@@ -129,6 +129,7 @@ export function CartScreen() {
                                     <div className="cart-info">
                                       <Link href={ROUTES.product(l.slug)} className="name text-md link fw-medium">{l.name}</Link>
                                       {bienThe && <div className="variants">{bienThe}</div>}
+                                        {Boolean(l.eligibleQuantity) && <p className="text-xs text-primary mt_4">{l.eligibleQuantity} / {l.quantity} sản phẩm từ live đủ điều kiện xét ưu đãi</p>}
                                       {l.status === "unavailable" && <p className="text-xs text-primary mb_8">Sản phẩm đã ngừng bán — hãy xoá khỏi giỏ.</p>}
                                       {l.status === "low_stock" && <p className="text-xs text-primary mb_8">Kho chỉ còn {l.maxQuantity} sản phẩm — hãy giảm số lượng.</p>}
                                       <span className="remove-cart link remove" role="button" onClick={() => xoa(l.variantId)}>Xoá</span>

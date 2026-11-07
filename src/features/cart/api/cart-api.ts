@@ -13,6 +13,8 @@ import type { CartLine, CartSnapshot } from "@/stores/cart-store";
 interface BeCartLine {
   variantId: string; productId: string; slug: string; name: string; imageUrl: string | null; color: string; size: string; sku: string;
   shopSlug: string; shopName: string;
+  eligibleQuantity?: number;
+  sourceLots?: CartLine["sourceLots"];
   quantity: number; unitPrice: MoneyResponse; lineTotal: MoneyResponse; maxQuantity: number; selected: boolean; status: "ok" | "low_stock" | "unavailable";
 }
 interface BeCart { lines: BeCartLine[]; itemCount: number; selectedCount: number; subtotal: MoneyResponse; freeShippingThreshold: MoneyResponse }
@@ -23,6 +25,7 @@ function chuanHoa(c: BeCart): CartSnapshot {
       variantId: l.variantId, productId: l.productId, slug: l.slug, name: l.name, imageUrl: l.imageUrl ?? "", color: l.color ?? "", size: l.size ?? "",
       unitPrice: Number(l.unitPrice.amount), quantity: l.quantity, maxQuantity: Math.max(1, l.maxQuantity), lineTotal: Number(l.lineTotal.amount), status: l.status,
       selected: l.selected, shopSlug: l.shopSlug || undefined, shopName: l.shopName || undefined,
+      eligibleQuantity: l.eligibleQuantity, sourceLots: l.sourceLots,
     })),
     subtotal: Number(c.subtotal.amount),
     itemCount: c.itemCount,

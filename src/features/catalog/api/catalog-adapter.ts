@@ -8,7 +8,7 @@ import type {
 } from "@/features/catalog/types";
 import type { MediaItem, MoneyResponse } from "@/types/common";
 import { anhBannerHopLe } from "@/features/catalog/lib/banner-view";
-import { ghepMauSize } from "@/features/catalog/lib/variant-axes";
+import { ghepMauSize } from "@/lib/product-variant-axes";
 
 /*
  * ADAPTER catalog: DTO camelCase của NestJS eco_backend → DTO snake_case của FE (PLAN-0006).

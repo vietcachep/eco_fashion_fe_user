@@ -1,4 +1,4 @@
-import type { ProductDetailResponse, ProductVariantResponse, VariantOption } from "@/features/catalog/types";
+import type { ProductDetailResponse, ProductVariantResponse, VariantOption } from "@/types/catalog";
 
 /*
  * TRỤC BIẾN THỂ — nơi DUY NHẤT biết một sản phẩm "chọn gì để ra SKU" (PLAN-0016: sàn đa ngành hàng).

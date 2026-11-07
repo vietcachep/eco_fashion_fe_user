@@ -1,8 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import type { ColorOption } from "@/features/catalog/types";
-import type { TrucHienThi } from "@/features/catalog/hooks/use-variant-picker";
+import type { ColorOption } from "@/types/catalog";
+import type { TrucHienThi } from "@/hooks/use-product-variant-picker";
 
 /*
  * Chọn biến thể — `ColorSelect1` + `SizeSelect` của Vineta (`variant-picker-item`), dùng ở trang chi tiết, quick

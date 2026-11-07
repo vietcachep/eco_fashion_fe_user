@@ -6,8 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-/**
- * Giải thích khi không có kết quả khớp / chỉ có gợi ý theo ngành / rất ít kết quả khớp / vision lỗi
- * @nullable
- */
-export type ImageSearchResponseMessage = { [key: string]: unknown } | null;
+export type VisualMatchResponseRelevance = typeof VisualMatchResponseRelevance[keyof typeof VisualMatchResponseRelevance];
+
+
+export const VisualMatchResponseRelevance = {
+  similar: 'similar',
+  related: 'related',
+} as const;

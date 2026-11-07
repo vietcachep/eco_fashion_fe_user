@@ -6,8 +6,6 @@
  * OpenAPI spec version: 0.1.0
  */
 
-/**
- * Mô tả ngắn ảnh do vision sinh (≤ 500 ký tự)
- * @nullable
- */
-export type ImageSearchResponseDescription = { [key: string]: unknown } | null;
+export type AiControllerAnalyzeImageBody = {
+  image: Blob | File;
+};

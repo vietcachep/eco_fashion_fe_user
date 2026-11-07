@@ -12,6 +12,7 @@ import { ProductListBody } from "@/features/catalog/components/list/product-list
 import { FilterModal } from "@/features/catalog/components/list/filter-modal";
 import { ShopRating } from "@/features/catalog/components/shared/shop-rating";
 import { ProductGridSkeleton } from "@/features/catalog/components/shared/skeletons";
+import { LiveShopEntry } from "@/features/livestream";
 
 /*
  * Mini-storefront theo gian hàng — `/shop/[slug]` (PLAN-0008 §2/§3): banner riêng cho shop (logo, tên,
@@ -59,6 +60,7 @@ export function ShopScreen({ shop, page, categories, category, facets, saleProdu
                 <ShopRating value={shop.rating_avg} count={shop.review_count} className="list-star" textClass={cn("text-xs", shop.banner_url ? "text-white" : "text-main")} />
                 {shop.description && <p className="text-sm mt_10 mb_4">{shop.description}</p>}
                 <p className="text-sm mb-0">{shop.product_count} sản phẩm</p>
+                <LiveShopEntry shopSlug={shop.slug} />
                 <Link href={ROUTES.contactTo({ shopSlug: shop.slug, shop: shop.name })} className="tf-btn btn-out-line-dark2 animate-btn mt_12">Nhắn cho shop</Link>
               </div>
             </div>

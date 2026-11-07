@@ -9,9 +9,9 @@ import { ROUTES } from "@/lib/constants";
 import { formatMoney, discountPercent } from "@/lib/format";
 import { QuantitySelect } from "@/components/shared/quantity-select";
 import type { ProductDetailResponse } from "@/features/catalog/types";
-import { useVariantPicker } from "@/features/catalog/hooks/use-variant-picker";
+import { useVariantPicker } from "@/hooks/use-product-variant-picker";
 import { useProductDetail } from "@/features/catalog/hooks/use-product-detail";
-import { VariantPickers } from "@/features/catalog/components/detail/variant-picker";
+import { VariantPickers } from "@/components/shared/product-variant-picker";
 import { useAddToCart } from "@/features/cart/hooks/use-add-to-cart";
 import { useUiStore } from "@/stores/ui-store";
 

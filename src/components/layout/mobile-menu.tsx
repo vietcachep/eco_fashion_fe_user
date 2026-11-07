@@ -87,6 +87,7 @@ export function MobileMenu({ danhMuc }: { danhMuc: CategoryResponse[] }) {
               <MucXo id="mb-bst" label="Bộ sưu tập" nhom={menu.boSuuTap} pathname={pathname} />
               <li className="nav-mb-item"><Link onClick={dongPopup} href={`${ROUTES.products}?sale=1`} className="mb-menu-link">Giảm giá</Link></li>
               <li className="nav-mb-item"><Link onClick={dongPopup} href={ROUTES.shops} className={cn("mb-menu-link", pathname.startsWith(ROUTES.shops) && "menuActive")}>Gian hàng</Link></li>
+              <li className="nav-mb-item"><Link onClick={dongPopup} href={ROUTES.live} className={cn("mb-menu-link", pathname.startsWith(ROUTES.live) && "menuActive")}>FITLY Live</Link></li>
               <MucXo id="mb-ai" label="AI" nhom={[{ heading: "", items: MENU_AI }]} pathname={pathname} />
               <MucXo id="mb-ho-tro" label="Hỗ trợ" nhom={[{ heading: "", items: MENU_HO_TRO }]} pathname={pathname} />
             </ul>

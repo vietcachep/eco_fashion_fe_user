@@ -1,3 +1,5 @@
+import { aiControllerSearch, aiControllerAnalyzeImage } from "@/lib/api/generated/ai/ai";
+import type { VisualMatchResponse, VisualAnalyzeResponse } from "@/lib/api/generated/model";
 import { api } from "@/lib/api";
 import { API_PREFIX, CHE_DO_MOCK } from "@/lib/api-mode";
 import { bocData } from "@/lib/api/envelope";
@@ -93,18 +95,23 @@ export async function waitTryOn(jobId: string, onTick?: (status: string) => void
  * `available: false` khi BE chưa có khoá OpenAI → màn hình báo "chưa khả dụng", KHÔNG coi là lỗi. Không khớp / vision
  * lỗi: `products: []` + `message` giải thích (BE không ném lỗi). Chế độ mẫu không có tìm bằng ảnh.
  */
-export interface ImageSearchView { available: boolean; description: string | null; keywords: string[]; message: string | null; products: ProductCardResponse[] }
+export interface ImageSearchView { available: boolean; description: string | null; keywords: string[]; message: string | null; products: ProductCardResponse[]; matches: VisualMatchResponse[]; searchMode?: string }
 
-export async function searchByImage(file: File): Promise<ImageSearchView> {
-  if (CHE_DO_MOCK) return { available: false, description: null, keywords: [], message: "Tìm bằng ảnh cần máy chủ AI nên chưa có ở chế độ dữ liệu mẫu.", products: [] };
-  const fd = new FormData();
-  fd.append("image", file);
-  const d = bocData(await api.post<ApiResponse<BeImageSearch>>(`${API_PREFIX}/ai/image-search`, fd, { headers: { ...headers(), "Content-Type": "multipart/form-data" }, timeout: 60_000 }), "ai.image-search");
+export async function analyzeSearchImage(file: File, signal?: AbortSignal): Promise<VisualAnalyzeResponse> {
+  if (CHE_DO_MOCK) return { available: false, regions: [], message: "Chọn vùng trực tiếp trên ảnh để tìm khi có kết nối máy chủ." };
+  const raw = await aiControllerAnalyzeImage({ image: file }, { headers: { ...headers(), "Content-Type": "multipart/form-data" }, timeout: 90_000 }, signal);
+  return bocData({ data: raw as unknown as ApiResponse<VisualAnalyzeResponse> }, "ai.image-search.analyze");
+}
+export async function searchByImage(file: File, target?: string, signal?: AbortSignal): Promise<ImageSearchView> {
+  if (CHE_DO_MOCK) return { available: false, description: null, keywords: [], message: "Tìm bằng ảnh cần máy chủ AI nên chưa có ở chế độ dữ liệu mẫu.", products: [], matches: [] };
+  const raw = await aiControllerSearch({ image: file, target }, { headers: { ...headers(), "Content-Type": "multipart/form-data" }, timeout: 180_000 }, signal);
+  const d = bocData({ data: raw as unknown as ApiResponse<BeImageSearch> }, "ai.image-search");
   const chuoi = (v: unknown) => (typeof v === "string" && v.trim() ? v : null);
-  return {
-    available: Boolean(d.available), description: chuoi(d.description), keywords: d.keywords ?? [], message: chuoi(d.message),
-    /* Swagger không khai hình dạng phần tử `items` (cùng dạng ProductCardResponse) — ép kiểu đúng một chỗ này. */
-    products: await bosungShop(((d.items ?? []) as unknown as BeCard[]).map(chuanHoaCard)),
+  const matches = d.matches ?? [];
+  const matched = new Map(matches.map((m) => [m.productId, m]));
+  const products = await bosungShop((d.items ?? []).map(chuanHoaCard));
+  return { available: Boolean(d.available), description: chuoi(d.description), keywords: d.keywords ?? [], message: chuoi(d.message), matches, searchMode: d.searchMode,
+    products: products.map((p) => { const match = matched.get(p.id); return match ? { ...p, image_url: match.imageUrl, hover_image_url: null } : p; }),
   };
 }
 

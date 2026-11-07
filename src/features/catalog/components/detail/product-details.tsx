@@ -12,10 +12,11 @@ import { RatingStars } from "@/components/shared/rating-stars";
 import { ShopRating } from "@/features/catalog/components/shared/shop-rating";
 import { ANH_TRONG } from "@/features/catalog/api/catalog-adapter";
 import type { CategoryResponse, ProductDetailResponse } from "@/features/catalog/types";
-import { useVariantPicker } from "@/features/catalog/hooks/use-variant-picker";
-import { nhanBienThe } from "@/features/catalog/lib/variant-axes";
+import { useVariantPicker } from "@/hooks/use-product-variant-picker";
+import { nhanBienThe } from "@/lib/product-variant-axes";
+import { LiveShopEntry } from "@/features/livestream";
 import { ProductGallery } from "@/features/catalog/components/detail/product-gallery";
-import { VariantPickers } from "@/features/catalog/components/detail/variant-picker";
+import { VariantPickers } from "@/components/shared/product-variant-picker";
 import { useAddToCart } from "@/features/cart/hooks/use-add-to-cart";
 import { useWishlistStore } from "@/stores/wishlist-store";
 import { useCompareStore } from "@/stores/compare-store";
@@ -137,6 +138,7 @@ export function ProductDetails({ product, category }: { product: ProductDetailRe
                         </span>
                       </Link>
                       <span className="d-flex flex-wrap gap-2">
+                        <LiveShopEntry shopSlug={product.shop.slug} />
                         <Link href={ROUTES.contactTo({ shopSlug: product.shop.slug, shop: product.shop.name, product: product.name })} className="tf-btn btn-out-line-dark2 animate-btn">
                           Hỏi shop
                         </Link>

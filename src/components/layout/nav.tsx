@@ -157,6 +157,7 @@ export function Nav({ danhMuc, boSuuTap }: NavData) {
       <li className="menu-item">
         <Link href={ROUTES.shops} className={cn("item-link", (pathname.startsWith(ROUTES.shops) || pathname.startsWith(ROUTES.shop(""))) && "menuActive")}>Gian hàng</Link>
       </li>
+      <li className="menu-item"><Link href={ROUTES.live} className={cn("item-link", pathname.startsWith(ROUTES.live) && "menuActive")}>Live</Link></li>
       <li className="menu-item position-relative">
         <a href="#" onClick={chan} className={cn("item-link", MENU_AI.some((m) => active(m.href)) && "menuActive")}>AI <i className="icon icon-arr-down" /></a>
         <XoCot nhom={[{ heading: "", items: MENU_AI }]} active={active} gon />

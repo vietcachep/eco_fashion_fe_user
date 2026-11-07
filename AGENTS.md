@@ -100,6 +100,12 @@ Trong giai đoạn mock, `cart-store` được phép tính tạm tính để mà
 
 ## Architecture Rule: Feature-first
 
+### PLAN-0015 — FITLY Live
+
+Feature `livestream` sở hữu khám phá/phòng xem và adapter LiveKit/Socket.IO tải lười. Một `LiveProvider` ở AppProviders giữ một kết nối media qua điều hướng nội bộ; đổi nơi gắn video không tạo thêm audio hoặc xin camera từ viewer. REST vẫn qua component→feature hook→API typed/generated→axios chung.
+
+DTO biến thể dùng chung ở `types/catalog.ts`, thuật toán ở `lib/product-variant-axes.ts`, hook ở `hooks/use-product-variant-picker.ts`, UI ở `components/shared/product-variant-picker.tsx`; barrel types catalog reexport để giữ tương thích caller cũ. Đọc catalog xuyên feature qua mặt tiền `features/catalog/index.ts`, không import adapter riêng. Intent checkout thuộc order, kho claim thuộc promotion. `/checkout?intent=...` không sửa selection/xoá giỏ toàn cục để giả Mua ngay.
+
 ```text
 src/
 ├── app/            # (shop) (auth) (account) — routing + layout ONLY

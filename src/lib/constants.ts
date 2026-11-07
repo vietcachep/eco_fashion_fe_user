@@ -17,6 +17,9 @@ export const ROUTES = {
   shop: (slug: string) => `/shop/${slug}`,
   /* Danh sách các gian hàng đã duyệt (`GET /shops`). */
   shops: "/shops",
+  live: "/live",
+  liveSession: (id: string) => `/live/${encodeURIComponent(id)}`,
+  accountVouchers: "/account/vouchers",
   cart: "/cart",
   checkout: "/checkout",
   /* Trang đặt thành công — tham số là mã ĐƠN CHA (DHN…); màn cũng nhận mã đơn con (DH…) và tự tìm ra nhóm chứa nó. */

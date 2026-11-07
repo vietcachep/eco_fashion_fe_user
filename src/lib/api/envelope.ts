@@ -20,6 +20,11 @@ export function bocData<T>(res: { data: ApiResponse<T> }, ten: string): T {
   return d;
 }
 
+/* Swagger mô tả DTO trần nhưng HTTP vẫn bọc ApiResponse; ép kiểu đúng một lần tại boundary Orval. */
+export function generatedData<T>(request: Promise<unknown>, name: string): Promise<T> {
+  return request.then((raw) => bocData<T>({ data: raw as ApiResponse<T> }, name));
+}
+
 export function chuanHoaTrang<B, F>(p: BePage<B>, map: (b: B) => F): PageResponse<F> {
   return { items: (p.content ?? []).map(map), page: p.page, size: p.size, total_items: p.totalElements, total_pages: p.totalPages };
 }

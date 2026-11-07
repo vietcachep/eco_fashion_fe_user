@@ -1,5 +1,11 @@
 # 01 — Kiến trúc
 
+## FITLY Live — PLAN-0015
+
+`features/livestream` giữ discovery/viewer/panel, hooks và adapter media tải lười. LiveKit truyền video; Socket.IO và snapshot REST phục hồi chat/ghim/trạng thái. `LiveProvider` ở provider chung giữ một kết nối qua điều hướng, chuyển video giữa stage và player thu nhỏ; tài khoản đổi/đóng player phải dọn kết nối. Media secret không ở FE, viewer không xin camera/micro.
+
+Thuật toán/chọn biến thể được trích dùng chung (`types/catalog.ts`, `lib/product-variant-axes.ts`, `hooks/use-product-variant-picker.ts`, `components/shared/product-variant-picker.tsx`); catalog có public index cho đọc chi tiết. Kho voucher cá nhân `/account/vouchers` thuộc promotion. Checkout intent `/checkout?intent=...` thuộc order, dùng quote/attempt server và giữ giỏ cũ. Chỉ lưu tham chiếu attempt/hash gắn tài khoản để khôi phục, không lưu địa chỉ/token/toàn bộ lệnh thanh toán vào URL/storage.
+
 ## Stack
 
 | Lớp | Chọn | Ghi chú |

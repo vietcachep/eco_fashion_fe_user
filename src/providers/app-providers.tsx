@@ -5,6 +5,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
 import { makeQueryClient } from "@/lib/query-client";
 import { StoreHydration } from "@/providers/store-hydration";
+import { LiveProvider } from "@/features/livestream/components/viewer/live-provider";
 
 /*
  * Provider cấp app — bọc MỘT lần ở root layout.
@@ -16,7 +17,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={client}>
       <StoreHydration />
-      {children}
+      <LiveProvider>{children}</LiveProvider>
       <Toaster position="top-center" richColors closeButton />
     </QueryClientProvider>
   );

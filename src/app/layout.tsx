@@ -22,6 +22,7 @@ import "rc-slider/assets/index.css";
 import "@/styles/globals.scss";
 import "@/styles/fitly.scss";
 import "@/styles/account.scss";
+import "@/styles/livestream.scss";
 
 /*
  * Font: Vineta dùng Poppins/Albert Sans — không có dấu tiếng Việt. Thay bằng

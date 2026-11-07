@@ -1,0 +1,96 @@
+/* FITLY Live dùng token Vineta; nền tối chỉ thuộc sân khấu video, không thay theme cửa hàng. */
+:where(.fitly-live-room, .fitly-live-discovery, .fitly-live-wallet, .fitly-live-mini) button:where(:not(.tf-btn)) { background:transparent; border:0; border-radius:0; padding:0; color:inherit; font:inherit; line-height:1.5; text-transform:none; letter-spacing:normal; cursor:pointer; }
+:where(.fitly-live-room, .fitly-live-discovery, .fitly-live-wallet) button:disabled { opacity:.5; cursor:default; }
+
+.fitly-live-eyebrow { display:block; color:var(--primary); font-size:11px; line-height:1.5; font-weight:700; letter-spacing:.1em; text-transform:uppercase; }
+.fitly-live-room, .fitly-live-discovery, .fitly-live-wallet { button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible { outline:2px solid var(--primary); outline-offset:3px; } }
+.fitly-live-shop-entry { display:inline-flex; align-items:center; gap:8px; padding:10px 14px; margin-top:10px; background:var(--primary-4); border:1px solid var(--primary); color:var(--primary); border-radius:8px; font-size:12px; min-height:44px; }
+.fitly-live-discovery-head { display:flex; justify-content:space-between; align-items:flex-end; gap:24px; margin-bottom:40px; h1 { font-family:var(--font-heading),serif; font-size:clamp(42px,6vw,76px); line-height:1.1; margin:10px 0 16px; span { color:var(--primary); } } p { max-width:560px; color:var(--text-3); } }
+.fitly-live-filters { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:20px 0; margin-bottom:24px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); >div { display:flex; gap:8px; } button { border:1px solid var(--line); border-radius:999px; padding:10px 18px; min-height:44px; background:var(--white); white-space:nowrap; &.active { color:var(--white); background:var(--dark); border-color:var(--dark); } } form { display:flex; gap:8px; input { max-width:320px; border-radius:8px; } } }
+.fitly-live-category-filter { display:flex; align-items:center; gap:8px; font-size:12px; min-width:0; select { min-height:44px; width:200px; max-width:100%; font-size:12px; border-radius:8px; } }
+.fitly-live-filters { flex-wrap:wrap; }
+.fitly-live-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:28px 22px; }
+.fitly-live-cover { position:relative; aspect-ratio:3/4; overflow:hidden; border-radius:16px; background:var(--surface); img { object-fit:cover; transition:transform .3s; } }
+.fitly-live-card:hover .fitly-live-cover img { transform:scale(1.025); }
+.fitly-live-cover-fallback { display:grid; height:100%; place-content:center; font-weight:700; font-size:42px; line-height:.95; letter-spacing:-.05em; color:var(--text-3); text-align:center; }
+.fitly-live-card-badges { position:absolute; top:12px; left:12px; right:12px; display:flex; justify-content:space-between; gap:6px; span { font-size:10px; line-height:1.4; padding:5px 8px; border-radius:5px; background:rgba(0,0,0,.65); color:white; &.onair { background:var(--primary); } &.scheduled { background:var(--dark); } } }
+.fitly-live-card-body { padding:16px 2px; p { font-size:12px; color:var(--text-3); margin-bottom:6px; } h5 { font-family:var(--font-sans),sans-serif; font-size:16px; line-height:1.55; font-weight:600; } time { font-size:12px; color:var(--primary); } }
+.fitly-live-card-skeleton { aspect-ratio:3/4; border-radius:16px; background:var(--surface); }
+.fitly-live-empty { padding:56px 20px; text-align:center; border:1px solid var(--line); border-radius:16px; display:flex; flex-direction:column; gap:16px; align-items:center; p { max-width:560px; color:var(--text-3); } }
+.fitly-live-pages { display:flex; align-items:center; justify-content:center; gap:16px; margin:28px 0; font-size:13px; button { min-height:44px; border:1px solid var(--line); border-radius:6px; padding:8px 15px; &:disabled { opacity:.4; } } }
+.fitly-live-room { max-width:1400px; padding:16px 32px 28px; margin:auto; }
+body:has(.fitly-live-room) { #header, .topbar, .tf-topbar, footer, .tf-toolbar-bottom, .toolbar-bottom, .chatbot-toggle, .chatbot-panel, #goTop { display:none!important; } }
+.fitly-live-room-head { display:flex; align-items:center; gap:20px; padding:4px 0 20px; }
+.fitly-live-wordmark { font-weight:800; font-size:22px; letter-spacing:.04em; span { display:block; font-size:10px; letter-spacing:.25em; line-height:1; color:var(--primary); } }
+.fitly-live-shop { display:flex; align-items:center; gap:10px; font-size:14px; font-weight:600; img { border-radius:50%; } small { display:block; font-size:11px; font-weight:400; color:var(--text-3); } }
+.fitly-live-follow { border:1px solid var(--primary); color:var(--primary); border-radius:6px; padding:8px 12px; font-size:12px; min-height:44px; }
+.fitly-live-room-close { margin-left:auto; font-size:28px; width:44px; height:44px; display:grid; place-items:center; }
+.fitly-live-room-grid { display:grid; grid-template-columns:minmax(0,1fr) 390px; gap:20px; }
+.fitly-live-stage-wrap { position:relative; min-width:0; background:#111114; border-radius:16px; overflow:hidden; }
+.fitly-live-stage { position:relative; width:100%; height:min(76dvh,740px); min-height:440px; }
+.fitly-live-media { position:absolute; inset:0; color:white; video { width:100%; height:100%; object-fit:contain; } }
+.fitly-live-media-state { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; padding:36px; text-align:center; color:#eee; p { font-size:13px; max-width:360px; } }
+.fitly-live-onair { font-size:30px; font-weight:700; letter-spacing:.1em; color:var(--primary); }
+.fitly-live-media-tools { position:absolute; bottom:12px; left:12px; right:12px; display:flex; gap:7px; align-items:center; button,a { background:rgba(0,0,0,.65); color:white; padding:9px 12px; min-height:40px; border-radius:6px; font-size:11px; } }
+.fitly-live-play { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); background:white; color:#151515; padding:15px 20px; border-radius:999px; z-index:2; }
+.fitly-live-connection { position:absolute; left:16px; top:52px; font-size:12px; background:rgba(0,0,0,.7); padding:7px 12px; border-radius:5px; }
+.fitly-live-stage-status { position:absolute; top:16px; left:16px; padding:5px 9px; color:white; background:var(--primary); border-radius:5px; font-size:11px; pointer-events:none; }
+.fitly-live-pinned { position:absolute; bottom:68px; left:16px; max-width:calc(100% - 32px); min-width:260px; display:flex; gap:10px; align-items:center; text-align:left; border-radius:10px; background:white; padding:10px; box-shadow:0 5px 20px rgba(0,0,0,.15); >span:not(.fitly-live-product-number):not(.fitly-live-pinned-cta) { min-width:0; flex:1; } strong { display:block; font-size:12px; font-weight:600; max-width:240px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } small { font-size:10px; color:var(--text-3); } b { color:var(--primary); font-size:12px; } img { width:46px; height:56px; object-fit:cover; border-radius:5px; } }
+.fitly-live-product-number { align-self:flex-start; font-size:11px; font-weight:700; background:var(--primary); color:white; border-radius:4px; padding:3px 5px; }
+.fitly-live-pinned-cta { color:white; background:var(--primary); padding:10px 14px; border-radius:6px; font-size:12px; }
+.fitly-live-panel { border:1px solid var(--line); border-radius:16px; min-width:0; height:min(76dvh,740px); min-height:440px; display:flex; flex-direction:column; background:var(--white); }
+.fitly-live-panel-header { display:flex; border-bottom:1px solid var(--line); padding:0 16px; }
+.fitly-live-tabs { display:flex; flex:1; button { flex:1; font-size:12px; padding:18px 8px; border-bottom:2px solid transparent; white-space:nowrap; &[aria-selected=true] { border-color:var(--primary); color:var(--primary); font-weight:600; } } }
+.fitly-live-panel-close { display:none; }
+.fitly-live-panel-body { padding:20px; overflow-y:auto; flex:1; min-height:0; overscroll-behavior:contain; }
+.fitly-live-room-meta { display:flex; justify-content:space-between; gap:24px; padding:22px 0; h1 { font-family:var(--font-sans),sans-serif; font-size:21px; line-height:1.5; } p { font-size:13px; color:var(--text-3); margin-top:6px; } }
+.fitly-live-meta-actions { display:flex; gap:16px; align-items:flex-start; white-space:nowrap; button { min-height:44px; font-size:12px; color:var(--text-3); } }
+.fitly-live-chat { min-height:100%; display:flex; flex-direction:column; }
+.fitly-live-messages { flex:1; >div { margin-bottom:18px; font-size:13px; strong { font-size:12px; } p { margin-top:3px; overflow-wrap:anywhere; } &.pinned { background:var(--primary-4); padding:12px; border-radius:8px; } } }
+.fitly-live-chat-form { display:flex; flex-wrap:wrap; gap:8px; padding-top:14px; border-top:1px solid var(--line); textarea { flex:1; width:0; min-height:76px; min-width:180px; font-size:13px; } button { color:var(--primary); font-size:13px; font-weight:600; min-width:44px; align-self:flex-end; height:44px; } p { width:100%; } }
+.fitly-live-back { font-size:12px; color:var(--text-3); text-align:left; padding:10px 0; }
+.fitly-live-warning { background:#fff6dd; border-radius:8px; color:#715313; padding:12px; font-size:12px; margin-bottom:16px; p { margin:8px 0; } button,a { text-decoration:underline; margin-right:12px; } }
+.fitly-live-product-search { display:flex; gap:8px; margin-bottom:18px; input { min-width:0; flex:1; padding:10px 12px; font-size:13px; } button { font-size:12px; color:var(--primary); min-width:44px; } }
+.fitly-live-products { display:flex; flex-direction:column; gap:14px; }
+.fitly-live-product { display:flex; gap:10px; align-items:center; text-align:left; border-bottom:1px solid var(--line); padding-bottom:14px; img { flex-shrink:0; border-radius:6px; object-fit:cover; } .fitly-live-product-name { display:block; font-size:13px; line-height:1.5; margin-bottom:6px; } strong { display:block; color:var(--primary); font-size:13px; } small { display:block; font-size:10px; color:var(--text-3); } }
+.fitly-live-variant-summary { display:flex; gap:14px; align-items:flex-start; margin:14px 0 24px; img { object-fit:cover; border-radius:8px; } h6 { font-size:15px; line-height:1.5; margin:8px 0; } strong { color:var(--primary); font-size:18px; } p { font-size:11px; color:var(--text-3); } }
+.fitly-live-variant .variant-picker-item { margin-bottom:18px; }
+.fitly-live-quantity { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; font-size:13px; input { max-width:90px; min-height:44px; padding:8px; } }
+.fitly-live-buy-actions { display:flex; gap:8px; margin-top:20px; .tf-btn { flex:1; justify-content:center; padding:12px; font-size:12px; } }
+.fitly-live-vouchers article { border:1px dashed var(--primary); border-radius:10px; padding:18px; margin:18px 0; h6 { margin:8px 0; } small { display:block; margin:8px 0 16px; } }
+.fitly-live-ended { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; padding:30px; text-align:center; gap:18px; background:#111114; p { font-size:13px; } a { color:var(--primary); } }
+.fitly-live-mini { position:fixed; right:22px; bottom:100px; width:190px; height:290px; background:#111114; border-radius:14px; overflow:hidden; box-shadow:0 10px 36px rgba(0,0,0,.25); z-index:1042; color:white; video { width:100%; height:100%; object-fit:contain; } .fitly-live-media-tools { left:5px; right:5px; bottom:5px; flex-wrap:wrap; gap:4px; button,a { font-size:9px; padding:6px; } } .fitly-live-media-state { padding:12px; .fitly-live-onair { font-size:17px; } p { font-size:10px; } } }
+.fitly-live-mobile-actions, .fitly-live-panel-backdrop { display:none; }
+.fitly-live-checkout-head { margin-bottom:30px; max-width:760px; h2 { font-size:30px; margin:10px 0; } p { font-size:13px; color:var(--text-3); } }
+.fitly-live-order-card { border:1px solid var(--line); border-radius:14px; padding:24px; margin-bottom:20px; h5 { font-size:18px; margin-bottom:20px; } label { font-size:13px; } }
+.fitly-live-order-line { display:flex; gap:12px; align-items:flex-start; padding:14px 0; border-bottom:1px solid var(--line); img { border-radius:5px; object-fit:cover; } >div { flex:1; font-size:13px; } p { font-size:11px; color:var(--text-3); margin-top:5px; } strong { font-size:12px; white-space:nowrap; } small { display:block; font-size:10px; } }
+.fitly-live-method { display:flex; gap:10px; align-items:center; min-height:44px; input { width:18px; height:18px; } }
+.fitly-live-total { margin-top:24px; >div { display:flex; justify-content:space-between; margin-bottom:12px; font-size:13px; } dt { font-weight:400; } dd { margin:0; } .total { border-top:1px solid var(--line); padding-top:16px; font-weight:700; font-size:18px; } }
+.fitly-live-wallet-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; }
+.fitly-live-voucher-ticket { border:1px solid var(--line); border-left:4px solid var(--primary); border-radius:10px; padding:24px; h5 { font-size:18px; margin:10px 0; } p { margin-top:12px; } small { font-size:11px; color:var(--text-3); } summary { font-size:12px; cursor:pointer; } }
+.fitly-live-voucher-code { font-size:22px; letter-spacing:.06em; }
+@media(max-width:1023px) { .fitly-live-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px 14px; } .fitly-live-room { padding:12px 18px; } .fitly-live-room-grid { grid-template-columns:minmax(0,1fr) 330px; gap:12px; } .fitly-live-panel-body { padding:14px; } }
+@media(max-width:767px) {
+  .fitly-live-discovery-head { align-items:flex-start; flex-direction:column; gap:18px; margin-bottom:26px; }
+  .fitly-live-category-filter select { flex:1; width:0; }
+  .fitly-live-filters { align-items:stretch; flex-direction:column; form input { max-width:none; } }
+  .fitly-live-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px 12px; }
+  .fitly-live-card-body { padding:10px 0; h5 { font-size:13px; } }
+  .fitly-live-card-badges { left:8px; right:8px; top:8px; span { font-size:8px; padding:4px 5px; } }
+  .fitly-live-room { padding:0; }
+  .fitly-live-room-head { padding:10px 12px; gap:10px; .fitly-live-wordmark { display:none; } }
+  .fitly-live-room-grid { display:block; }
+  .fitly-live-stage-wrap { border-radius:0; }
+  .fitly-live-stage { height:calc(100dvh - 132px); min-height:420px; }
+  .fitly-live-pinned { left:10px; bottom:110px; max-width:calc(100% - 20px); width:calc(100% - 20px); strong { max-width:180px; } }
+  .fitly-live-media-tools { bottom:61px; }
+  .fitly-live-mobile-actions { display:flex; position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,.8); color:white; padding:8px 8px calc(8px + env(safe-area-inset-bottom)); gap:6px; button { flex:1; font-size:11px; min-height:44px; border-radius:5px; border:1px solid rgba(255,255,255,.3); } }
+  .fitly-live-panel { display:none; &.mobile-open { display:flex; position:fixed; bottom:0; left:0; right:0; height:min(78dvh,720px); min-height:250px; padding-bottom:env(safe-area-inset-bottom); border-radius:18px 18px 0 0; z-index:1051; } }
+  .fitly-live-panel-backdrop { display:block; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1050; border:0; }
+  .fitly-live-panel-close { display:block; font-size:28px; width:44px; }
+  .fitly-live-room-meta { padding:18px 14px; flex-direction:column; gap:12px; h1 { font-size:18px; } }
+  .fitly-live-mini { width:140px; height:230px; right:12px; }
+  .fitly-live-wallet-grid { grid-template-columns:1fr; }
+  .fitly-live-order-card { padding:18px; }
+}
+@media(prefers-reduced-motion:reduce) { .fitly-live-card .fitly-live-cover img { transition:none; } }

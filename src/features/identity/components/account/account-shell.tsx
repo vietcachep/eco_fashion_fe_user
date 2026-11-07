@@ -25,6 +25,7 @@ export const MUC_TAI_KHOAN = [
   { href: ROUTES.accountProfile, label: "Hồ sơ của tôi", icon: "icon-user" },
   { href: ROUTES.accountNotifications, label: "Thông báo", icon: "bell" },
   { href: ROUTES.accountOrders, label: "Đơn hàng của tôi", icon: "icon-order" },
+  { href: ROUTES.accountVouchers, label: "Voucher của tôi", icon: "icon-coupon" },
   { href: ROUTES.accountReturns, label: "Đổi trả / hoàn tiền", icon: "icon-return" },
   { href: ROUTES.accountAddresses, label: "Sổ địa chỉ", icon: "icon-location" },
   { href: ROUTES.wishlist, label: "Sản phẩm yêu thích", icon: "icon-heart" },
